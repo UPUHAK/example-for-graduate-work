@@ -7,16 +7,15 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 @Data
-public class Login {
+public class NewPassword {
 
-    @Schema(description = "пароль")
+    @Schema(description = "текущий пароль")
     @NotBlank
     @Size(min = 8, max = 16)
-    private String password;
+    private String currentPassword;
 
-    @Schema(description = "логин")
+    @Schema(description = "новый пароль")
     @NotBlank
-    @Size(min = 4, max = 32)
-    private String username;
-
+    @Size(min = 8, max = 16)
+    private String newPassword;
 }
