@@ -1,5 +1,7 @@
 package ru.skypro.homework.controller;
 
+
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +12,8 @@ import ru.skypro.homework.dto.Ads;
 
 import java.util.ArrayList;
 import java.util.List;
+
+
 
 @Slf4j
 @CrossOrigin(value = "http://localhost:3000")
