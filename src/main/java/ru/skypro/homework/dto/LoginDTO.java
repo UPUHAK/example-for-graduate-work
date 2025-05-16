@@ -7,7 +7,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 @Data
-public class Login {
+public class LoginDTO {
 
     @Schema(description = "пароль")
     @NotBlank

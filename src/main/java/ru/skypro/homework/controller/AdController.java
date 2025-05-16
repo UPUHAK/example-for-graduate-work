@@ -5,12 +5,9 @@ package ru.skypro.homework.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import ru.skypro.homework.dto.Ad;
-import ru.skypro.homework.dto.Ads;
+import ru.skypro.homework.dto.AdDTO;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -23,26 +20,26 @@ import java.util.List;
 public class AdController {
 
     @GetMapping
-    public ResponseEntity<List<Ad>> getAllAds() {
+    public ResponseEntity<List<AdDTO>> getAllAds() {
 
-        return ResponseEntity.ok(List.of(new Ad()));
+        return ResponseEntity.ok(List.of(new AdDTO()));
     }
 
     @PostMapping
-    public ResponseEntity<Ad> addAd(@RequestBody Ad ad) {
+    public ResponseEntity<AdDTO> addAd(@RequestBody AdDTO adDTO) {
 
-        return ResponseEntity.status(201).body(ad);
+        return ResponseEntity.status(201).body(adDTO);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Ad> getAd(@PathVariable Integer id) {
+    public ResponseEntity<AdDTO> getAd(@PathVariable Integer id) {
 
-        return ResponseEntity.ok(new Ad());
+        return ResponseEntity.ok(new AdDTO());
     }
     @PatchMapping("/{id}")
-    public ResponseEntity<Ad> updateAd(@PathVariable Integer id, @RequestBody Ad ad) {
+    public ResponseEntity<AdDTO> updateAd(@PathVariable Integer id, @RequestBody AdDTO adDTO) {
 
-        return ResponseEntity.ok(ad);
+        return ResponseEntity.ok(adDTO);
     }
 
     @DeleteMapping("/{id}")

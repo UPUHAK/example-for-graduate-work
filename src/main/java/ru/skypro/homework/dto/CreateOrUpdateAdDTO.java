@@ -6,7 +6,7 @@ import lombok.Data;
 import javax.validation.constraints.*;
 
 @Data
-public class CreateOrUpdateAd {
+public class CreateOrUpdateAdDTO {
 
     @Schema(description = "заголовок объявления")
     @NotBlank

@@ -8,7 +8,7 @@ import javax.validation.constraints.*;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class ExtendedAd extends Ad {
+public class ExtendedAdDTO extends AdDTO {
 
     @Schema(description = "имя автора объявления")
     @NotBlank

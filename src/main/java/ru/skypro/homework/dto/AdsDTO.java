@@ -6,11 +6,11 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class Ads {
+public class AdsDTO {
 
     @Schema(description = "общее количество объявлений")
     private Integer count;
 
     @Schema(description = "список объявлений")
-    private List<Ad> results;
+    private List<AdDTO> results;
 }

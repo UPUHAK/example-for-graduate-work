@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
-public class Comment {
+public class CommentDTO {
 
     @Schema(description = "id автора комментария")
     private Integer author;
