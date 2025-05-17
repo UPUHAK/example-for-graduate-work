@@ -2,20 +2,14 @@ package ru.skypro.homework.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.AvatarUpdate;
 import ru.skypro.homework.dto.NewPassword;
 import ru.skypro.homework.dto.UpdateUser;
-import ru.skypro.homework.dto.User;
-
-import javax.validation.Valid;
-
-
+import ru.skypro.homework.dto.UserDTO;
 
 
 @Slf4j
@@ -35,16 +29,16 @@ public class UserController {
 
 
     @GetMapping("/me")
-    public ResponseEntity<User> getUser () {
+    public ResponseEntity<UserDTO> getUser () {
 
-        User user = new User();
+        UserDTO user = new UserDTO();
         return ResponseEntity.ok(user);
     }
 
     @PatchMapping("/me")
-    public ResponseEntity<User> updateUser (@RequestBody UpdateUser  updateUser ) {
+    public ResponseEntity<UserDTO> updateUser (@RequestBody UpdateUser  updateUser ) {
 
-        return ResponseEntity.ok(new User());
+        return ResponseEntity.ok(new UserDTO());
     }
 
     @PutMapping("/me/image")

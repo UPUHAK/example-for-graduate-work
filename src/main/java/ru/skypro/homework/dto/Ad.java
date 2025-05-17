@@ -10,8 +10,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 
 @Data
-@NoArgsConstructor // Конструктор без параметров
-@AllArgsConstructor // Конструктор с параметрами
+@NoArgsConstructor
+@AllArgsConstructor
 public class Ad {
 
     @Schema(description = "id автора объявления")
