@@ -2,20 +2,14 @@ package ru.skypro.homework.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import ru.skypro.homework.dto.AvatarUpdate;
-import ru.skypro.homework.dto.NewPassword;
-import ru.skypro.homework.dto.UpdateUser;
-import ru.skypro.homework.dto.User;
-
-import javax.validation.Valid;
-
-
+import ru.skypro.homework.dto.AvatarUpdateDTO;
+import ru.skypro.homework.dto.NewPasswordDTO;
+import ru.skypro.homework.dto.UpdateUserDTO;
+import ru.skypro.homework.dto.UserDTO;
 
 
 @Slf4j
@@ -28,28 +22,28 @@ public class UserController {
     private final UserDetailsService userDetailsService;
 
     @PostMapping("/set_password")
-    public ResponseEntity<Void> setPassword(@RequestBody NewPassword newPassword) {
+    public ResponseEntity<Void> setPassword(@RequestBody NewPasswordDTO newPassword) {
 
         return ResponseEntity.ok().build();
     }
 
 
     @GetMapping("/me")
-    public ResponseEntity<User> getUser () {
+    public ResponseEntity<UserDTO> getUser () {
 
-        User user = new User();
+        UserDTO user = new UserDTO();
         return ResponseEntity.ok(user);
     }
 
     @PatchMapping("/me")
-    public ResponseEntity<User> updateUser (@RequestBody UpdateUser  updateUser ) {
+    public ResponseEntity<UserDTO> updateUser (@RequestBody UpdateUserDTO updateUser ) {
 
-        return ResponseEntity.ok(new User());
+        return ResponseEntity.ok(new UserDTO());
     }
 
     @PutMapping("/me/image")
-    public ResponseEntity<?> updateAvatar(@ModelAttribute AvatarUpdate avatarUpdate) {
-        MultipartFile file = avatarUpdate.getFile();
+    public ResponseEntity<?> updateAvatar(@ModelAttribute AvatarUpdateDTO avatarUpdateDTO) {
+        MultipartFile file = avatarUpdateDTO.getFile();
         return ResponseEntity.ok("Аватар успешно обновлён !");
     }
 }

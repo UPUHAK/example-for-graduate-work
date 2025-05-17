@@ -6,7 +6,7 @@ import lombok.Data;
 import javax.validation.constraints.Email;
 
 @Data
-public class User {
+public class UserDTO {
 
     @Schema(description = "id пользователя")
     private Integer id;

@@ -7,7 +7,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 @Data
-public class CreateOrUpdateComment {
+public class CreateOrUpdateCommentDTO {
 
     @Schema(description = "текст комментария")
     @NotBlank
