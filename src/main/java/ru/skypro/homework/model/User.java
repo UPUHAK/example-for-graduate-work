@@ -1,8 +1,7 @@
 package ru.skypro.homework.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import ru.skypro.homework.dto.Role;
 
 import javax.persistence.*;
@@ -11,10 +10,11 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
-@Setter
-@Getter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
-@Table(name = "app_user")
+@Table(name = "user")
 @Schema(description = "Сущность пользователя, представляющая пользователя в системе")
 public class User {
 
@@ -58,14 +58,5 @@ public class User {
     @Schema(description = "URL профиля изображения пользователя", example = "http://example.com/image.jpg")
     private String image;
 
-    public User() {}
 
-    public User(String email, String firstName, String lastName, String phone, Role role, String image) {
-        this.email = email;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.phone = phone;
-        this.role = role;
-        this.image = image;
-    }
 }
