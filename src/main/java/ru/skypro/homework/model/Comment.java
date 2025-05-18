@@ -18,10 +18,21 @@ import java.util.List;
 @Table(name = "comment")
 public class Comment {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "pk", nullable = false, updatable = false)
+    @Schema(description = "pk комментария")
+    private Integer pk;
 
-    @Column(name = "author_id", nullable = false, updatable = false)
-    @Schema(description = "id автора комментария")
-    private Integer author;
+    @ManyToOne
+    @JoinColumn(name = "author_id", nullable = false)
+    @Schema(description = "Автор комментария")
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "ad_id", nullable = false)
+    private Ad ad;
+
 
     @Column(name = "image")
     @Schema(description = "ссылка на аватар автора комментария", example = "http://example.com/image.jpg")
@@ -38,22 +49,11 @@ public class Comment {
     @Schema(description = "дата и время создания комментария в миллисекундах с 00:00:00 01.01.1970")
     private Long createdAt;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "pk", nullable = false, updatable = false)
-    @Schema(description = "pk комментария")
-    private Integer pk;
 
     @Column(name = "text", nullable = false)
     @Schema(description = "текст комментария")
     private String text;
 
-    @Column(name = "count", nullable = false)
-    @Schema(description = "Общее количество комментариев")
-    private Integer count = 0;
 
-    @Column(name = "results")
-    @Schema(description = "список комментариев")
-    private List<CommentDTO> results;
 }
 

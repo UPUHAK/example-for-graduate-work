@@ -9,12 +9,13 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 @Schema(description = "Сущность пользователя, представляющая пользователя в системе")
 public class User {
 
@@ -57,6 +58,15 @@ public class User {
     @Column(name = "image")
     @Schema(description = "URL профиля изображения пользователя", example = "http://example.com/image.jpg")
     private String image;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @Schema(description = "Список комментариев пользователя")
+    private List<Comment> comments;
+
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @Schema(description = "Список объявлений пользователя")
+    private List<Ad> ads;
 
 
 }
