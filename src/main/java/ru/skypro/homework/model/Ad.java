@@ -3,7 +3,6 @@ package ru.skypro.homework.model;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NonNull;
-import ru.skypro.homework.dto.AdDTO;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
