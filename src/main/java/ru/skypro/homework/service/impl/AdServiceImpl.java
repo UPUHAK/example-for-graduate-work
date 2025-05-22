@@ -1,6 +1,7 @@
 package ru.skypro.homework.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.skypro.homework.dto.AdDTO;
@@ -45,6 +46,7 @@ public class AdServiceImpl implements AdService {
         return adMapper.convertToDTO(ad);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @adSecurity.isAdOwner(#id, authentication.name)")
     @Override
     @Transactional
     public AdDTO updateAd(Integer id, AdDTO adDTO) {
@@ -59,6 +61,7 @@ public class AdServiceImpl implements AdService {
         return adMapper.convertToDTO(updatedAd);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @adSecurity.isAdOwner(#id, authentication.name)")
     @Override
     @Transactional
     public void deleteAd(Integer id) {
