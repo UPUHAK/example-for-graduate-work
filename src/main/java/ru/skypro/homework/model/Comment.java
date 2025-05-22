@@ -6,8 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.NotNull;
 
 @Data
 @NoArgsConstructor
@@ -31,7 +30,7 @@ public class Comment {
     @JoinColumn(name = "ad_id", nullable = false)
     private Ad ad;
 
-    @NotBlank(message = "Дата создания комментария обязательна")
+    @NotNull(message = "Дата создания комментария обязательна")
     @Column(name = "created_at")
     @Schema(description = "дата и время создания комментария в миллисекундах с 00:00:00 01.01.1970")
     private Long createdAt;
