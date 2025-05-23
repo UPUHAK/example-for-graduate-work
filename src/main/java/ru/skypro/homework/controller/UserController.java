@@ -10,6 +10,9 @@ import ru.skypro.homework.dto.AvatarUpdateDTO;
 import ru.skypro.homework.dto.NewPasswordDTO;
 import ru.skypro.homework.dto.UpdateUserDTO;
 import ru.skypro.homework.dto.UserDTO;
+import ru.skypro.homework.service.UserService;
+
+import javax.validation.Valid;
 
 
 @Slf4j
@@ -19,31 +22,40 @@ import ru.skypro.homework.dto.UserDTO;
 @RequestMapping("/users")
 public class UserController {
 
-    private final UserDetailsService userDetailsService;
+    private final UserService userService;
 
     @PostMapping("/set_password")
-    public ResponseEntity<Void> setPassword(@RequestBody NewPasswordDTO newPassword) {
-
+    public ResponseEntity<Void> setPassword(@RequestBody @Valid NewPasswordDTO newPassword) {
+        log.info("Установка нового пароля для текущего пользователя");
+        userService.setPassword(newPassword);
         return ResponseEntity.ok().build();
     }
 
-
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getUser () {
-
-        UserDTO user = new UserDTO();
+        log.info("Получение информации о текущем пользователе");
+        UserDTO user = userService.getCurrentUser ();
         return ResponseEntity.ok(user);
     }
 
     @PatchMapping("/me")
-    public ResponseEntity<UserDTO> updateUser (@RequestBody UpdateUserDTO updateUser ) {
-
-        return ResponseEntity.ok(new UserDTO());
+    public ResponseEntity<UserDTO> updateUser (@RequestBody @Valid UpdateUserDTO updateUser ) {
+        UserDTO currentUser  = userService.getCurrentUser (); // Получаем текущего пользователя
+        log.info("Обновление информации о пользователе: {}", currentUser .getEmail());
+        UserDTO updatedUser  = userService.updateUser (updateUser );
+        return ResponseEntity.ok(updatedUser );
     }
+
+
+
 
     @PutMapping("/me/image")
-    public ResponseEntity<?> updateAvatar(@ModelAttribute AvatarUpdateDTO avatarUpdateDTO) {
+    public ResponseEntity<String> updateAvatar(@ModelAttribute AvatarUpdateDTO avatarUpdateDTO) {
         MultipartFile file = avatarUpdateDTO.getFile();
-        return ResponseEntity.ok("Аватар успешно обновлён !");
+        log.info("Обновление аватара пользователя с файлом: {}", file.getOriginalFilename());
+        userService.updateAvatar(file);
+        return ResponseEntity.ok("Аватар успешно обновлён!");
     }
 }
+
+

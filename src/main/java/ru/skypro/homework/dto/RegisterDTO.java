@@ -37,4 +37,9 @@ public class RegisterDTO {
     @Schema(description = "роль пользователя")
     @NotBlank
     private Role role;
+
+    @Schema(description = "адрес электронной почты пользователя")
+    @NotBlank
+    @Pattern(regexp = "^[A-Za-z0-9+_.-]+@(.+)$", message = "Неверный формат email")
+    private String email; // Добавлено поле email
 }

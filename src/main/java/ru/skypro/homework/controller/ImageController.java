@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.skypro.homework.model.Image;
-import ru.skypro.homework.service.ImageService;
+import ru.skypro.homework.service.impl.ImageServiceImpl;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
 public class ImageController {
 
     @Autowired
-    private ImageService imageService;
+    private ImageServiceImpl imageService;
 
     // Получить все изображения или изображение по ID
     @GetMapping

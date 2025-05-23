@@ -1,54 +1,24 @@
 package ru.skypro.homework.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import ru.skypro.homework.exception.ResourceNotFoundException;
+import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.model.Image;
-import ru.skypro.homework.repository.ImageRepository;
+import ru.skypro.homework.model.User;
 
 import java.util.List;
 import java.util.Optional;
 
-@Service
-public class ImageService {
+public interface ImageService {
 
-    @Autowired
-    private ImageRepository imageRepository;
+    Image saveAvatar(User user, MultipartFile file);
 
+    Optional<Image> getImageById(Integer id);
 
-    public List<Image> getAllImages() {
-        return imageRepository.findAll();
-    }
+    List<Image> getAllImages();
 
+    Image createImage(Image image);
 
-    public Optional<Image> getImageById(Integer id) {
-        return imageRepository.findById(id);
-    }
+    Image updateImage(Integer id, Image imageDetails);
 
-
-    public Image createImage(Image image) {
-        return imageRepository.save(image);
-    }
-
-
-    public Image updateImage(Integer id, Image imageDetails) {
-        /*
-         Проверяем, существует ли изображение
-         */
-        if (imageRepository.existsById(id)) {
-            imageDetails.setId_image(id);
-            return imageRepository.save(imageDetails);
-        } else {
-            throw new ResourceNotFoundException("Image not found with id " + id);
-        }
-    }
-
-
-    public void deleteImage(Integer id) {
-        if (imageRepository.existsById(id)) {
-            imageRepository.deleteById(id);
-        } else {
-            throw new ResourceNotFoundException("Image not found with id " + id);
-        }
-    }
+    void deleteImage(Integer id);
 }
+
