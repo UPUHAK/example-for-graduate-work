@@ -23,7 +23,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
     @Schema(description = "Уникальный идентификатор пользователя", example = "1")
-    private long id;
+    private Integer id;
 
     @Email(message = "Email должен быть действительным")
     @NotBlank(message = "Email обязателен")
@@ -67,6 +67,12 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @Schema(description = "Список объявлений пользователя")
     private List<Ad> ads;
+
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "avatar_id")
+    @Schema(description = "Аватар пользователя")
+    private Image avatar;
 
 
 }
