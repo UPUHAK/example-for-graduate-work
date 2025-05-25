@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 
 @Data
 @AllArgsConstructor
@@ -14,6 +15,14 @@ public  class UserDTO {
 
     @Schema(description = "id пользователя")
     private Integer id;
+
+    @Schema(description = "логин пользователя")
+    @NotBlank(message = "Username is required")
+    private String username;
+
+    @Schema(description = "пароль пользователя")
+    @NotBlank(message = "Password is required") // Валидация для пароля
+    private String password;
 
     @Schema(description = "логин пользователя")
     @Email

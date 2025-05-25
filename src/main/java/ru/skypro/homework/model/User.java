@@ -51,7 +51,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    @Schema(description = "Роль пользователя в системе", example = "USER")
+    @Schema(description = "Роль пользователя в системе", example = "ADMIN")
     private Role role;
 
     @Column(name = "image")
@@ -67,7 +67,7 @@ public class User {
     private List<Ad> ads;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "avatar_id")
+    @JoinColumn(name = "image_id")
     @Schema(description = "Аватар пользователя")
     private Image avatar;
 

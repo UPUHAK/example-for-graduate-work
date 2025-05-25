@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.skypro.homework.dto.CommentDTO;
 import ru.skypro.homework.exception.CommentNotFoundException;
 import ru.skypro.homework.exception.UserNotFoundException;
-import ru.skypro.homework.mapper.CommentMapperImpl;
+import ru.skypro.homework.mapper.CommentMapper;
 import ru.skypro.homework.model.Comment;
 import ru.skypro.homework.model.User;
 import ru.skypro.homework.model.Ad;
@@ -23,7 +23,8 @@ public class CommentServiceImpl implements CommentService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final AdRepository adRepository;
-    private final CommentMapperImpl commentMapper;
+    private final CommentMapper commentMapper;
+
 
     @Override
     @Transactional

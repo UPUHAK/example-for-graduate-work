@@ -2,7 +2,7 @@ package ru.skypro.homework.dto;
 
 import org.springframework.web.multipart.MultipartFile;
 
-public class AvatarUpdateDTO {
+public class ImageUpdateDTO {
 
     private MultipartFile file;
 

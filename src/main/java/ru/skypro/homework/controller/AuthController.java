@@ -1,10 +1,9 @@
 package ru.skypro.homework.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,12 +18,16 @@ import ru.skypro.homework.repository.UserRepository;
 import java.util.Optional;
 
 @Slf4j
-@CrossOrigin(value = "http://localhost:3000")
+@CrossOrigin(value = "http://localhost:8080")
 @RestController
 public class AuthController {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder; // Для хеширования паролей
+    /*
+     Для хеширования паролей
+     */
+    private final PasswordEncoder passwordEncoder;
+    Authentication authentication;
 
     public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -39,25 +42,18 @@ public class AuthController {
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
-            // Проверяем пароль
+
             if (passwordEncoder.matches(login.getPassword(), user.getPassword())) {
-                // Успешная аутентификация
+                userRepository.save(user);
+
                 return ResponseEntity.ok().build();
             } else {
                 // Неверный пароль
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Неверный пароль");
             }
         } else {
-            // Пользователь не найден — создаём нового
-            User newUser = new User();
-            newUser.setUsername(login.getUsername());
-            newUser.setPassword(passwordEncoder.encode(login.getPassword()));
-            // Можно задать другие поля по умолчанию, например роль
-            newUser.setRole(Role.USER);
-
-            userRepository.save(newUser);
-
-            return ResponseEntity.status(HttpStatus.CREATED).build();
+            // Пользователь не найден
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Пользователь не найден");
         }
     }
 
@@ -65,30 +61,40 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody RegisterDTO register) {
         log.info("Attempting to register user: {}", register.getUsername());
 
-        // Проверка на существование пользователя
+        /*
+         Проверка на существование пользователя
+         */
         if (userRepository.findByUsername(register.getUsername()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Пользователь с таким именем уже существует.");
         }
 
-        // Проверка на наличие имени пользователя и пароля
+        /*
+         Проверка на наличие имени пользователя и пароля
+         */
         if (register.getUsername() == null || register.getPassword() == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Имя пользователя и пароль не могут быть пустыми.");
         }
 
-        // Создание нового пользователя
-        User newUser  = new User();
-        newUser .setUsername(register.getUsername());
-        newUser .setPassword(passwordEncoder.encode(register.getPassword()));
-        newUser .setFirstName(register.getFirstName());
-        newUser .setLastName(register.getLastName());
-        newUser .setPhone(register.getPhone());
-        newUser .setEmail(register.getEmail());
-        newUser .setRole(Role.USER); // например, установка роли по умолчанию
+        /*
+         Создание нового пользователя
+         */
+        User newUser = new User();
+        newUser.setUsername(register.getUsername());
+        newUser.setPassword(passwordEncoder.encode(register.getPassword()));
+        newUser.setFirstName(register.getFirstName());
+        newUser.setLastName(register.getLastName());
+        newUser.setPhone(register.getPhone());
+        newUser.setEmail(register.getEmail());
 
-        // Сохранение пользователя в базе данных
-        userRepository.save(newUser );
+        // Установка роли
+        if (register.getRole() != null) {
+            newUser.setRole(register.getRole());
+        } else {
+            newUser.setRole(Role.USER); // Установка роли по умолчанию
+        }
 
-        log.info("User  registered successfully: {}", newUser .getUsername());
+        userRepository.save(newUser);
+        log.info("User  registered successfully: {}", newUser.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body("Пользователь зарегистрирован успешно.");
     }
 
