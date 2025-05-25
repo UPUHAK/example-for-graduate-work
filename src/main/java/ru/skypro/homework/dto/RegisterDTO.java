@@ -1,7 +1,10 @@
 package ru.skypro.homework.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import lombok.NonNull;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
@@ -35,11 +38,29 @@ public class RegisterDTO {
     private String phone;
 
     @Schema(description = "роль пользователя")
-    @NotBlank
+    @NonNull
     private Role role;
 
     @Schema(description = "адрес электронной почты пользователя")
     @NotBlank
     @Pattern(regexp = "^[A-Za-z0-9+_.-]+@(.+)$", message = "Неверный формат email")
     private String email; // Добавлено поле email
+
+    @JsonCreator
+    public RegisterDTO(
+            @JsonProperty("username") String username,
+            @JsonProperty("password") String password,
+            @JsonProperty("firstName") String firstName,
+            @JsonProperty("lastName") String lastName,
+            @JsonProperty("phone") String phone,
+            @JsonProperty("role") Role role,
+            @JsonProperty("email") String email) {
+        this.username = username;
+        this.password = password;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.phone = phone;
+        this.role = role;
+        this.email = email;
+    }
 }

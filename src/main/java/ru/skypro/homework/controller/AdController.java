@@ -27,7 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdController {
 
-    private final AdRepository adRepository; // Репозиторий для работы с объявлениями
+    private final AdRepository adRepository;
     private final UserRepository userRepository;
 
     @PostMapping
@@ -88,7 +88,7 @@ public class AdController {
         return ResponseEntity.noContent().build();
     }
 
-    // Метод для преобразования Ad в AdDTO
+
     private AdDTO convertToDTO(Ad ad) {
         AdDTO adDTO = new AdDTO();
         adDTO.setPk(ad.getPk());

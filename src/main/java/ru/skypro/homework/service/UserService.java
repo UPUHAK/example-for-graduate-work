@@ -4,6 +4,7 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.NewPasswordDTO;
 import ru.skypro.homework.dto.UpdateUserDTO;
 import ru.skypro.homework.dto.UserDTO;
+import ru.skypro.homework.model.User;
 
 import java.util.List;
 
@@ -32,7 +33,7 @@ public interface UserService {
      * Обновляет аватар текущего пользователя.
      * @param file файл с изображением аватара
      */
-    void updateAvatar(MultipartFile file);
+    void updateImage(MultipartFile file);
 
     /**
      * Возвращает список всех пользователей.
@@ -40,6 +41,7 @@ public interface UserService {
      */
     List<UserDTO> getAllUsers();
 
+    User createUser(UserDTO userDto);
 }
 
 
