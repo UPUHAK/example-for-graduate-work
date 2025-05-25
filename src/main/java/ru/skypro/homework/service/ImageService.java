@@ -25,7 +25,7 @@ public interface ImageService {
 
     void saveToDatabase(ImageDTO imageDTO, Path imagePath, MultipartFile file);
 
-    Optional<Image> findImageById(Long id);
+    Optional<Image> findImageById(Integer id);
 }
 
 

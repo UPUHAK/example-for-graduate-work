@@ -20,19 +20,23 @@ public interface UserService {
      * Возвращает DTO текущего аутентифицированного пользователя.
      * @return UserDTO с информацией о пользователе
      */
-    UserDTO getCurrentUser();
+    UserDTO getCurrentUser ();
 
     /**
      * Обновляет данные текущего пользователя.
-     * @param updateUser DTO с обновлёнными данными пользователя
+     * @param updateUser  DTO с обновлёнными данными пользователя
      * @return обновлённый UserDTO
      */
-    UserDTO updateUser(UpdateUserDTO updateUser);
+    UserDTO updateUser (UpdateUserDTO updateUser );
 
     /**
      * Обновляет аватар текущего пользователя.
+     * @param userId ID пользователя, которому принадлежит аватар
      * @param file файл с изображением аватара
      */
+    void updateImage(Integer userId, MultipartFile file);
+
+
     void updateImage(MultipartFile file);
 
     /**
@@ -41,8 +45,9 @@ public interface UserService {
      */
     List<UserDTO> getAllUsers();
 
-    User createUser(UserDTO userDto);
+    User createUser (UserDTO userDto);
 }
+
 
 
 

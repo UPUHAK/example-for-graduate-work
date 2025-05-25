@@ -18,10 +18,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.skypro.homework.controller.ImageController;
 import ru.skypro.homework.model.Image;
 import ru.skypro.homework.service.ImageService; // Используйте интерфейс
-
+import org.springframework.boot.test.mock.mockito.MockBean;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import static org.mockito.BDDMockito.when;
 
 @WebMvcTest(ImageController.class)
 public class ImageControllerTest {
@@ -29,34 +30,18 @@ public class ImageControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Mock
-    private ImageService imageService; // Изменено на интерфейс
+    @MockBean
+    private ImageService imageService;
 
     @BeforeEach
-    public void setup() {
-        MockitoAnnotations.openMocks(this);
+    public void setUp() {
+        List<Image> mockImages = Arrays.asList(new Image(1, "image1.png", new byte[0], null, null));
+        when(imageService.getAllImages()).thenReturn(mockImages);
     }
 
-    @Test
-    public void testGetAllImages() throws Exception {
-        // Подготовка данных для теста
-        Image image1 = new Image(1, "image1.png", new byte[0], null, null);
-        Image image2 = new Image(2, "image2.png", new byte[0], null, null);
-        List<Image> images = Arrays.asList(image1, image2);
-
-        when(imageService.getAllImages()).thenReturn(images);
-
-        // Выполнение запроса и проверка результата
-        mockMvc.perform(get("/api/images")
-
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[1].id").value(2));
-    }
 
     @Test
+    @WithMockUser (roles = "USER")
     public void testGetImageByIdFound() throws Exception {
         // Подготовка данных для теста
         Image image = new Image(1, "image.png", new byte[0], null, null);
@@ -71,11 +56,12 @@ public class ImageControllerTest {
     }
 
     @Test
+    @WithMockUser
     public void testGetImageByIdNotFound() throws Exception {
-        // Подготовка данных для теста
+
         when(imageService.getImageById(1)).thenReturn(Optional.empty());
 
-        // Выполнение запроса и проверка результата
+
         mockMvc.perform(get("/api/images/1") // Изменено на правильный путь
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());

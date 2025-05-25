@@ -45,7 +45,7 @@ public class ImageServiceImpl implements ImageService {
         return imageMapper.imageDTOToImage(imageDTO);
     }
     @Override
-    public Optional<Image> findImageById(Long id) {
+    public Optional<Image> findImageById(Integer id) {
         return imageRepository.findById(id);
     }
 
@@ -119,13 +119,11 @@ public class ImageServiceImpl implements ImageService {
 
         image.setImageUrl(imagePath.toString());
         try {
-            image.setData(imageFile.getBytes()); // Исключение может возникнуть здесь
+            image.setData(imageFile.getBytes());
         } catch (IOException e) {
             log.error("Error reading file for user {}: {}", imageDTO.getUserId(), e.getMessage());
             throw new RuntimeException("Ошибка при чтении файла. Попробуйте снова.", e);
         }
-
-        // Сохраняем изображение в базе данных
         imageRepository.save(image);
     }
 

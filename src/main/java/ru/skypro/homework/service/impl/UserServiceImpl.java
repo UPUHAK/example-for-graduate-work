@@ -7,12 +7,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import ru.skypro.homework.dto.ImageDTO;
 import ru.skypro.homework.dto.NewPasswordDTO;
 import ru.skypro.homework.dto.UpdateUserDTO;
 import ru.skypro.homework.dto.UserDTO;;
+import ru.skypro.homework.exception.UserNotFoundException;
 import ru.skypro.homework.mapper.UserMapper;
 import ru.skypro.homework.model.User;
 import ru.skypro.homework.repository.UserRepository;
@@ -22,6 +24,7 @@ import ru.skypro.homework.service.UserService;
 
 import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -52,38 +55,54 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateImage(MultipartFile file) {
-        User user = currentUserService.getCurrentUser ();
+    public void updateImage(Integer userId, MultipartFile file) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID " + userId + " не найден"));
+
 
         if (file.isEmpty()) {
-            log.warn("User  {} tried to upload an empty file.", user.getId());
+            log.warn("Пользователь {} попытался загрузить пустой файл.", user.getId());
             throw new IllegalArgumentException("Ошибка: файл пустой!");
         }
 
-        // Создание объекта ImageDTO
         ImageDTO imageDTO = new ImageDTO();
         imageDTO.setUserId(user.getId().intValue());
         imageDTO.setImageUrl(file.getOriginalFilename());
+
+
         try {
-            imageDTO.setData(file.getBytes()); // Преобразуем файл в массив байтов
+            imageDTO.setData(file.getBytes());
         } catch (IOException e) {
-            log.error("Error reading file for user {}: {}", user.getId(), e.getMessage());
+            log.error("Ошибка чтения файла для пользователя {}: {}", user.getId(), e.getMessage());
             throw new RuntimeException("Ошибка при чтении файла. Попробуйте снова.", e);
         }
         imageDTO.setAdId(null);
 
-        // Изменяем вызов saveToDatabase, чтобы передать необходимые параметры
+
         try {
-            Path imagePath = Paths.get("path/to/save/" + file.getOriginalFilename());
+            String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
+            Path imagePath = Paths.get("path/to/save/" + originalFilename);
+
+
+            Files.createDirectories(imagePath.getParent());
+
             imageService.saveToDatabase(imageDTO, imagePath, file);
-            log.info("User  {} uploaded an image successfully.", user.getId());
+            log.info("Пользователь {} успешно обновил аватар: {}", user.getId(), originalFilename);
         } catch (EntityNotFoundException e) {
-            log.error("User  not found: {}", e.getMessage());
+            log.error("Ошибка сохранения: пользователь не найден: {}", e.getMessage());
             throw new RuntimeException("Пользователь не найден.", e);
+        } catch (IOException e) {
+            log.error("Ошибка при сохранении файла для пользователя {}: {}", user.getId(), e.getMessage());
+            throw new RuntimeException("Ошибка при сохранении файла. Попробуйте снова.", e);
         }
     }
 
 
+    @Override
+    public void updateImage(MultipartFile file) {
+
+    }
 
     @Override
     public List<UserDTO> getAllUsers() {
@@ -111,11 +130,11 @@ public class UserServiceImpl implements UserService {
 
         User user = new User();
         user.setUsername(userDto.getUsername());
-        user.setPassword(userDto.getPassword()); // Не забудьте установить пароль
+        user.setPassword(userDto.getPassword());
         user.setFirstName(userDto.getFirstName());
         user.setLastName(userDto.getLastName());
         user.setPhone(userDto.getPhone());
-        user.setRole(userDto.getRole()); // Здесь устанавливается роль
+        user.setRole(userDto.getRole());
         user.setEmail(userDto.getEmail());
 
         log.info("Creating user with username: {}, email: {}, role: {}", user.getUsername(), user.getEmail(), user.getRole());

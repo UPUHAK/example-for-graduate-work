@@ -45,7 +45,7 @@ public class AdControllerTest {
 
     @Test
     public void testAddAd() throws Exception {
-        // Подготовка данных
+
         User user = new User();
         user.setId(1);
         AdDTO adDTO = new AdDTO();
@@ -54,7 +54,6 @@ public class AdControllerTest {
         adDTO.setImage("image_url");
         adDTO.setAuthor(1);
 
-        // Настройка моков
         when(userRepository.findById(1)).thenReturn(Optional.of(user));
         when(adRepository.save(any(Ad.class))).thenAnswer(invocation -> {
             Ad ad = invocation.getArgument(0);
@@ -62,7 +61,7 @@ public class AdControllerTest {
             return ad;
         });
 
-        // Выполнение запроса
+
         mockMvc.perform(post("/ads")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"Test Ad\", \"price\":100.0, \"image\":\"image_url\", \"author\":1}"))
@@ -71,7 +70,7 @@ public class AdControllerTest {
                 .andExpect(jsonPath("$.price").value(100.0))
                 .andExpect(jsonPath("$.author").value(1));
 
-        // Проверка взаимодействия с моками
+
         verify(userRepository).findById(1);
         verify(adRepository).save(any(Ad.class));
     }
@@ -89,10 +88,10 @@ public class AdControllerTest {
         ad.setImage("image_url");
         ad.setUser (user);
 
-        // Настройка моков
+
         when(adRepository.findById(1)).thenReturn(Optional.of(ad));
 
-        // Выполнение запроса
+
         mockMvc.perform(get("/ads/1")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -102,13 +101,13 @@ public class AdControllerTest {
                 .andExpect(jsonPath("$.image").value("image_url"))
                 .andExpect(jsonPath("$.author").value(1));
 
-        // Проверка взаимодействия с моками
+
         verify(adRepository).findById(1);
     }
 
     @Test
     public void testUpdateAd() throws Exception {
-        // Подготовка данных
+
         User user = new User();
         user.setId(1);
 
@@ -119,18 +118,18 @@ public class AdControllerTest {
         existingAd.setImage("old_image_url");
         existingAd.setUser (user);
 
-        // Настройка моков
+
         when(adRepository.findById(1)).thenReturn(Optional.of(existingAd));
         when(adRepository.save(any(Ad.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Новый объект AdDTO для обновления
+
         AdDTO updatedAdDTO = new AdDTO();
         updatedAdDTO.setTitle("Updated Title");
         updatedAdDTO.setPrice(150);
         updatedAdDTO.setImage("updated_image_url");
         updatedAdDTO.setAuthor(1);
 
-        // Выполнение запроса
+
         mockMvc.perform(put("/ads/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"title\":\"Updated Title\", \"price\":150.0, \"image\":\"updated_image_url\", \"author\":1}"))
@@ -141,34 +140,39 @@ public class AdControllerTest {
                 .andExpect(jsonPath("$.image").value("updated_image_url"))
                 .andExpect(jsonPath("$.author").value(1));
 
-        // Проверка взаимодействия с моками
+
         verify(adRepository).findById(1);
         verify(adRepository).save(any(Ad.class));
     }
     @Test
     public void testDeleteAd() throws Exception {
-        // Настраиваем мок репозитория: объявление с id=1 существует
+        /*
+         Настраиваем мок репозитория: объявление с id=1 существует
+         */
         when(adRepository.existsById(1)).thenReturn(true);
         doNothing().when(adRepository).deleteById(1);
 
-        // Выполняем DELETE-запрос
+        /*
+         Выполняем DELETE-запрос
+         */
         mockMvc.perform(delete("/ads/1"))
                 .andExpect(status().isNoContent());
 
-        // Проверяем вызовы репозитория
+
         verify(adRepository).existsById(1);
         verify(adRepository).deleteById(1);
     }
     @Test
     public void testDeleteAd_NotFound() throws Exception {
-        // Настраиваем мок репозитория: объявление с id=1 не существует
+        /*
+         Настраиваем мок репозитория: объявление с id=1 не существует
+         */
         when(adRepository.existsById(1)).thenReturn(false);
 
-        // Выполняем DELETE-запрос
+
         mockMvc.perform(delete("/ads/1"))
                 .andExpect(status().isNotFound());
 
-        // Проверяем вызов existsById, но deleteById не должен вызываться
         verify(adRepository).existsById(1);
         verify(adRepository, never()).deleteById(anyInt());
     }
