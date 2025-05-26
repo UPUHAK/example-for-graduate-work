@@ -45,10 +45,10 @@ public class UserControllerTest {
     public void testSetPassword() throws Exception {
         NewPasswordDTO newPasswordDTO = new NewPasswordDTO("currentPass123", "newPassword123");
 
-
+        // Настройка мока, если метод не возвращает значение
         doNothing().when(userService).setPassword(any(NewPasswordDTO.class));
 
-
+        // Преобразование объекта в JSON
         String json = new ObjectMapper().writeValueAsString(newPasswordDTO);
 
         mockMvc.perform(post("/users/set_password")
@@ -79,11 +79,11 @@ public class UserControllerTest {
         UpdateUserDTO updateUser  = new UpdateUserDTO("Имя", "Фамилия", "+7 123 456-78-90");
         UserDTO updatedUser  = new UserDTO(1, "newUser@example.com","password","newEmail@example.com", "Имя", "Фамилия", "+7 123 456-78-90", Role.USER, "link_to_avatar");
 
-
+        // Настройка моков
         when(userService.getCurrentUser ()).thenReturn(updatedUser );
         when(userService.updateUser (any(UpdateUserDTO.class))).thenReturn(updatedUser );
 
-
+        // Выполнение запроса и проверка результата
         mockMvc.perform(patch("/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"firstName\":\"Имя\",\"lastName\":\"Фамилия\",\"phone\":\"+7 123 456-78-90\"}"))
@@ -92,7 +92,7 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.firstName").value("Имя"))
                 .andExpect(jsonPath("$.lastName").value("Фамилия"));
 
-
+        // Проверка вызовов
         verify(userService, times(1)).updateUser (any(UpdateUserDTO.class));
     }
 
