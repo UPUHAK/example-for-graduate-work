@@ -1,6 +1,9 @@
 package ru.skypro.homework.dto;
 
+import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
+
+
 
 public class ImageUpdateDTO {
 
