@@ -22,3 +22,11 @@ UPDATE users SET is_authorize = FALSE;
 -- changeset dmitriy:4
 ALTER TABLE users
 ALTER COLUMN is_authorize SET NOT NULL;
+
+-- changeset dmitriy:5
+ALTER TABLE users
+ADD COLUMN image_id INT;
+
+-- changeset dmitriy:6
+ALTER TABLE users
+ADD CONSTRAINT fk_users_image FOREIGN KEY (image_id) REFERENCES image(id_image) ON DELETE SET NULL;

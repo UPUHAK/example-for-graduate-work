@@ -1,6 +1,6 @@
 -- liquibase formatted sql
 
--- changeset dmitriy:1
+-- changeset dmitriy:8
 
 CREATE TABLE IF NOT EXISTS comment (
     pk SERIAL PRIMARY KEY,                   -- Уникальный идентификатор комментария

@@ -1,6 +1,6 @@
 -- liquibase formatted sql
 
--- changeset dmitriy:1
+-- changeset dmitriy:7
 
 CREATE TABLE IF NOT EXISTS ads (
     id SERIAL PRIMARY KEY,           -- Уникальный идентификатор объявления

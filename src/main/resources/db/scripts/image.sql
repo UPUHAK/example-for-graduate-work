@@ -1,6 +1,6 @@
 -- liquibase formatted sql
 
--- changeset dmitriy:1
+-- changeset dmitriy:3
 
 CREATE TABLE IF NOT EXISTS image (
     id_image SERIAL PRIMARY KEY,                -- Уникальный идентификатор изображения

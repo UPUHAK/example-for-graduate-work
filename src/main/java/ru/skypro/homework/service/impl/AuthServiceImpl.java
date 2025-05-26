@@ -35,6 +35,7 @@ public class AuthServiceImpl implements AuthService {
         if (!encoder.matches(password, userDetails.getPassword())) {
             throw new BadCredentialsException("Неверный пароль для пользователя: " + userName);
         }
+
         return true;
     }
 

@@ -83,9 +83,13 @@ public class User {
     @Schema(description = "Имя пользователя для входа в систему", example = "ivan123")
     private String username;
 
+    public void setAuthorize(boolean authorize) {
+        isAuthorize = authorize;
+    }
+
     @Column(name = "is_authorize", nullable = false)
     @Schema(description = "Флаг, указывающий, авторизован ли пользователь", example = "true")
-    private boolean isAuthorize = false;
+    private boolean isAuthorize;
 
 
 }
