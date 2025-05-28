@@ -29,14 +29,6 @@ public interface UserService {
      */
     UserDTO updateUser (UpdateUserDTO updateUser );
 
-    /**
-     * Обновляет аватар текущего пользователя.
-     * @param userId ID пользователя, которому принадлежит аватар
-     * @param file файл с изображением аватара
-     */
-    void updateImage(Integer userId, MultipartFile file);
-
-
     void updateImage(MultipartFile file);
 
     /**

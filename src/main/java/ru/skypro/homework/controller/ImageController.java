@@ -18,7 +18,7 @@ public class ImageController {
 
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasRole('ADMIN') or @imageService.isOwner(#id, authentication.name)")
     public ResponseEntity<Image> getImageById(@PathVariable Integer id) {
         if (imageService == null) {
             throw new IllegalStateException("ImageService is not initialized");

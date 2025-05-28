@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.skypro.homework.dto.AdDTO;
 import ru.skypro.homework.exception.AdNotFoundException;
@@ -31,6 +32,7 @@ public class AdController {
     private final UserRepository userRepository;
 
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AdDTO> addAd(@Valid @RequestBody AdDTO adDTO) {
         log.info("Adding new ad: {}", adDTO);
 
@@ -50,6 +52,7 @@ public class AdController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AdDTO> getAd(@PathVariable Integer id) {
         log.info("Fetching ad with id: {}", id);
 
@@ -61,6 +64,7 @@ public class AdController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or (isAuthenticated() and @adSecurity.isOwner(#id, authentication))")
     public ResponseEntity<AdDTO> updateAd(@PathVariable Integer id, @Valid @RequestBody AdDTO adDTO) {
         log.info("Updating ad with id: {}", id);
 
@@ -78,6 +82,7 @@ public class AdController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or (isAuthenticated() and @adSecurity.isOwner(#id, authentication))")
     public ResponseEntity<Void> deleteAd(@PathVariable Integer id) {
         log.info("Deleting ad with id: {}", id);
 

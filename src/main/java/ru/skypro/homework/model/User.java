@@ -77,12 +77,21 @@ public class User {
     @Schema(description = "Пароль пользователя")
     private String password;
 
-    // Добавлено поле для имени пользователя
     @NotBlank(message = "Имя пользователя обязательно")
     @Size(min = 3, max = 16)
     @Column(name = "username", nullable = false, unique = true)
     @Schema(description = "Имя пользователя для входа в систему", example = "ivan123")
     private String username;
+
+    public void setAuthorize(boolean authorize) {
+        isAuthorize = authorize;
+    }
+
+    @Column(name = "is_authorize", nullable = false)
+    @Schema(description = "Флаг, указывающий, авторизован ли пользователь", example = "true")
+    private boolean isAuthorize;
+
+
 }
 
 
