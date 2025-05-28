@@ -8,5 +8,5 @@ databaseChangeLog:
   - include:
       file: db/scripts/comment.sql
   - include:
-      file: db/scripts/authorities.sql
+      file: db/scripts/
 

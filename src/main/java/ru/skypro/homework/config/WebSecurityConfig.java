@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
@@ -19,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 
 @Configuration
+@EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig {
 
@@ -46,7 +48,7 @@ public class WebSecurityConfig {
                 .and()
                 .authorizeHttpRequests(authorization -> authorization
                         .mvcMatchers(AUTH_WHITELIST).permitAll() // Ваши публичные эндпоинты
-                        .mvcMatchers("/users/me/image").permitAll() // Разрешить доступ к этому эндпоинту
+                        .mvcMatchers("/users/me/image").authenticated()
                         .mvcMatchers("/ads/**", "/users/**").authenticated() // Остальные эндпоинты требуют аутентификации
                         .mvcMatchers("/admin/**").hasAuthority("ADMIN")
                 )

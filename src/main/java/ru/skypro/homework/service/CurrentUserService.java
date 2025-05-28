@@ -2,6 +2,8 @@ package ru.skypro.homework.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -13,7 +15,8 @@ import ru.skypro.homework.repository.UserRepository;
 @RequiredArgsConstructor
 public class CurrentUserService {
 
-    private final UserRepository userRepository;
+    @Autowired
+    private  UserRepository userRepository;
 
     /**
      * Получает текущего аутентифицированного пользователя.
@@ -21,9 +24,9 @@ public class CurrentUserService {
      * @return текущий пользователь
      * @throws UserNotFoundException если пользователь не аутентифицирован или не найден
      */
-    public User getCurrentUser () {
+    public User getAuthenticatedUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
             log.warn("Пользователь не аутентифицирован");
             throw new UserNotFoundException("Пользователь не аутентифицирован");
         }

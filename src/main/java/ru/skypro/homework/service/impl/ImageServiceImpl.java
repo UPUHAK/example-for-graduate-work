@@ -3,6 +3,7 @@ package ru.skypro.homework.service.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -45,6 +46,7 @@ public class ImageServiceImpl implements ImageService {
         return imageMapper.imageDTOToImage(imageDTO);
     }
     @Override
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public Optional<Image> findImageById(Integer id) {
         return imageRepository.findById(id);
     }
@@ -66,21 +68,26 @@ public class ImageServiceImpl implements ImageService {
 
 
     @Override
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public Optional<Image> getImageById(Integer id) {
         return imageRepository.findById(id);
     }
 
     @Override
-    public List<Image> getAllImages() {
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<Image> getAllImages()
+    {
         return imageRepository.findAll();
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('USER') and @imageServiceImpl.isImageOwner(#id, authentication.name))")
     public Image createImage(Image image) {
         return imageRepository.save(image);
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('USER') and @imageServiceImpl.isImageOwner(#id, authentication.name))")
     public Image updateImage(Integer id, Image imageDetails) {
         Optional<Image> existingImage = imageRepository.findById(id);
         if (existingImage.isPresent()) {
@@ -92,6 +99,7 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('USER') and @imageServiceImpl.isImageOwner(#id, authentication.name))")
     public void deleteImage(Integer id) {
         if (!imageRepository.existsById(id)) {
             throw new EntityNotFoundException("Изображение с ID " + id + " не найдено.");
@@ -125,6 +133,11 @@ public class ImageServiceImpl implements ImageService {
             throw new RuntimeException("Ошибка при чтении файла. Попробуйте снова.", e);
         }
         imageRepository.save(image);
+    }
+
+    public boolean isImageOwner(Integer imageId, String username) {
+        Optional<Image> image = imageRepository.findById(imageId);
+        return image.map(value -> value.getUser ().getUsername().equals(username)).orElse(false);
     }
 
 
