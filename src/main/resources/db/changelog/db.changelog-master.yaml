@@ -1,10 +1,10 @@
 databaseChangeLog:
   - include:
-      file: db/scripts/user.sql
+      file: db/scripts/image.sql
   - include:
       file: db/scripts/ads.sql
   - include:
-      file: db/scripts/image.sql
+      file: db/scripts/user.sql
   - include:
       file: db/scripts/comment.sql
   - include:
