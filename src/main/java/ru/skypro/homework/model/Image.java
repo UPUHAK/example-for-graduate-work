@@ -25,15 +25,23 @@ public class Image {
     @Schema(description = "URL изображения")
     private String imageUrl;
 
-    @Lob
-    @Schema(description = "Данные изображения в бинарном формате")
-    private byte[] data;
-
     @ManyToOne
     @JoinColumn(name = "ad_id")
+    @Schema(description = "Объявление, к которому относится изображение")
     private Ad ad;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @Schema(description = "Пользователь, которому принадлежит изображение")
     private User user;
+
+    public Image(User user) {
+        this.user = user;
+
+
+    }
+    public String getUrl() {
+        return imageUrl;
+    }
+
 }

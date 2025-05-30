@@ -3,7 +3,9 @@ package ru.skypro.homework.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +20,7 @@ import ru.skypro.homework.repository.UserRepository;
 import java.util.Optional;
 
 @Slf4j
-@CrossOrigin(value = "http://localhost:8080")
+@CrossOrigin(value = "http://localhost:3000")
 @RestController
 public class AuthController {
 
@@ -38,13 +40,15 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginDTO login) {
         log.info("Attempting to log in user: {}", login.getUsername());
 
-        Optional<User> userOpt = userRepository.findByUsername(login.getUsername());
+        Optional<User> userOpt = userRepository.findByEmail(login.getUsername());
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
 
             if (passwordEncoder.matches(login.getPassword(), user.getPassword())) {
-                userRepository.save(user);
+
+                Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
 
                 return ResponseEntity.ok().build();
             } else {
@@ -57,6 +61,7 @@ public class AuthController {
         }
     }
 
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterDTO register) {
         log.info("Attempting to register user: {}", register.getUsername());
@@ -64,7 +69,7 @@ public class AuthController {
         /*
          Проверка на существование пользователя
          */
-        if (userRepository.findByUsername(register.getUsername()).isPresent()) {
+        if (userRepository.findByEmail(register.getUsername()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Пользователь с таким именем уже существует.");
         }
 
@@ -79,12 +84,12 @@ public class AuthController {
          Создание нового пользователя
          */
         User newUser = new User();
-        newUser.setUsername(register.getUsername());
+        newUser.setEmail(register.getUsername());
         newUser.setPassword(passwordEncoder.encode(register.getPassword()));
         newUser.setFirstName(register.getFirstName());
         newUser.setLastName(register.getLastName());
         newUser.setPhone(register.getPhone());
-        newUser.setEmail(register.getEmail());
+
 
         // Установка роли
         if (register.getRole() != null) {
@@ -94,7 +99,7 @@ public class AuthController {
         }
 
         userRepository.save(newUser);
-        log.info("User  registered successfully: {}", newUser.getUsername());
+        log.info("User  registered successfully: {}", newUser.getEmail());
         return ResponseEntity.status(HttpStatus.CREATED).body("Пользователь зарегистрирован успешно.");
     }
 

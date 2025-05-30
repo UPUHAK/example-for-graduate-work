@@ -12,7 +12,7 @@ public class CommentSecurity {
 
     public boolean isCommentOwner(Integer commentId, String username) {
         return commentRepository.findById(commentId)
-                .map(comment -> comment.getUser().getUsername().equals(username))
+                .map(comment -> comment.getUser().getEmail().equals(username))
                 .orElse(false);
     }
 }

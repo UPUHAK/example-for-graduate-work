@@ -3,7 +3,6 @@ package ru.skypro.homework.service.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,11 +13,18 @@ import ru.skypro.homework.model.Image;
 import ru.skypro.homework.model.User;
 import ru.skypro.homework.repository.ImageRepository;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+
 import ru.skypro.homework.repository.UserRepository;
 import ru.skypro.homework.service.ImageService;
+import ru.skypro.homework.service.ImageStorageService;
+
 import javax.persistence.EntityNotFoundException;
 
 @Service
@@ -27,15 +33,16 @@ public class ImageServiceImpl implements ImageService {
     private final ImageRepository imageRepository;
     private final ImageMapper imageMapper;
     private final UserRepository userRepository;
+    private final ImageStorageService imageStorageService;
 
     private static final Logger log = LoggerFactory.getLogger(ImageServiceImpl.class);
 
-
     @Autowired
-    public ImageServiceImpl(ImageRepository imageRepository, ImageMapper imageMapper, UserRepository userRepository) {
+    public ImageServiceImpl(ImageRepository imageRepository, ImageMapper imageMapper, UserRepository userRepository, ImageStorageService imageStorageService) {
         this.imageRepository = imageRepository;
         this.imageMapper = imageMapper;
         this.userRepository = userRepository;
+        this.imageStorageService = imageStorageService;
     }
 
     public ImageDTO convertToDto(Image image) {
@@ -45,49 +52,64 @@ public class ImageServiceImpl implements ImageService {
     public Image convertToEntity(ImageDTO imageDTO) {
         return imageMapper.imageDTOToImage(imageDTO);
     }
+
     @Override
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public Optional<Image> findImageById(Integer id) {
         return imageRepository.findById(id);
     }
 
     @Override
+    @Transactional
     public Image saveImage(Integer userId, MultipartFile file) throws IOException {
+        // Проверка на пустой файл
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Файл не должен быть пустым");
         }
+
+        // Поиск пользователя по ID
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь с ID " + userId + " не найден"));
 
-        Image image = new Image();
-        image.setUser(user);
-        image.setData(file.getBytes());
+        // Сохранение файла в файловой системе
+        String imageUrl;
+        try {
+            imageUrl = imageStorageService.store(file); // Пытаемся сохранить файл
+        } catch (IOException e) {
+            log.error("Ошибка при сохранении файла для пользователя {}: {}", userId, e.getMessage());
+            throw new RuntimeException("Ошибка при сохранении файла. Попробуйте снова.", e);
+        }
 
-        return imageRepository.save(image);
+        // Создание и сохранение объекта Image
+        Image image = new Image();
+        image.setUser (user);
+        image.setImageUrl(imageUrl);
+
+        try {
+            return imageRepository.save(image);
+        } catch (Exception e) {
+            // Если сохранение в БД не удалось, удаляем файл из файловой системы
+            imageStorageService.delete(imageUrl);
+            log.error("Ошибка при сохранении изображения в базе данных для пользователя {}: {}", userId, e.getMessage());
+            throw new RuntimeException("Ошибка при сохранении данных в базе. Попробуйте снова.", e);
+        }
     }
 
-
     @Override
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public Optional<Image> getImageById(Integer id) {
         return imageRepository.findById(id);
     }
 
     @Override
-    @PreAuthorize("hasRole('ADMIN')")
-    public List<Image> getAllImages()
-    {
+    public List<Image> getAllImages() {
         return imageRepository.findAll();
     }
 
     @Override
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('USER') and @imageServiceImpl.isImageOwner(#id, authentication.name))")
     public Image createImage(Image image) {
         return imageRepository.save(image);
     }
 
     @Override
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('USER') and @imageServiceImpl.isImageOwner(#id, authentication.name))")
     public Image updateImage(Integer id, Image imageDetails) {
         Optional<Image> existingImage = imageRepository.findById(id);
         if (existingImage.isPresent()) {
@@ -99,7 +121,6 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('USER') and @imageServiceImpl.isImageOwner(#id, authentication.name))")
     public void deleteImage(Integer id) {
         if (!imageRepository.existsById(id)) {
             throw new EntityNotFoundException("Изображение с ID " + id + " не найдено.");
@@ -108,40 +129,56 @@ public class ImageServiceImpl implements ImageService {
         imageRepository.deleteById(id);
     }
 
-    private Optional<Image> findImage(Integer userId) {
-        return imageRepository.findByUserId(userId);
-    }
-
+    @Override
     @Transactional
-    public void saveToDatabase(ImageDTO imageDTO, Path imagePath, MultipartFile imageFile) {
-        Optional<Image> optionalImage = imageRepository.findByUserId(imageDTO.getUserId());
-
-        Image image = optionalImage.orElseGet(() -> {
-            Image newImage = new Image();
-            User user = userRepository.findById(imageDTO.getUserId())
-                    .orElseThrow(() -> new EntityNotFoundException("Пользователь с ID " + imageDTO.getUserId() + " не найден"));
-            newImage.setUser(user);
-            return newImage;
-        });
-
-
-        image.setImageUrl(imagePath.toString());
-        try {
-            image.setData(imageFile.getBytes());
-        } catch (IOException e) {
-            log.error("Error reading file for user {}: {}", imageDTO.getUserId(), e.getMessage());
-            throw new RuntimeException("Ошибка при чтении файла. Попробуйте снова.", e);
+    public Image updateImageForUser (Integer userId, MultipartFile file) throws IOException, EntityNotFoundException {
+        // Проверка на пустой файл
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Ошибка: файл пустой!");
         }
-        imageRepository.save(image);
+
+        // Поиск пользователя по ID
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден."));
+
+        // Сохранение изображения через уже существующий метод
+        Image savedImage = saveImage(userId, file); // Используем метод saveImage для сохранения
+
+        // Обновление пути к изображению у пользователя
+        user.setImage(savedImage.getImageUrl());
+        userRepository.save(user); // Сохраняем изменения в базе данных
+
+        return savedImage; // Возвращаем сохраненное изображение
     }
+    @Override
+    public String saveFile(MultipartFile file) throws IOException {
+        // Проверяем, что файл не пустой
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("Файл пустой");
+        }
 
-    public boolean isImageOwner(Integer imageId, String username) {
-        Optional<Image> image = imageRepository.findById(imageId);
-        return image.map(value -> value.getUser ().getUsername().equals(username)).orElse(false);
+        // Получаем оригинальное имя файла
+        String originalFilename = file.getOriginalFilename();
+
+        // Путь для сохранения файла (пример)
+        Path uploadPath = Paths.get("uploads/images");
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath); // Создаем директории, если они не существуют
+        }
+
+        // Генерируем уникальное имя файла, чтобы избежать конфликтов
+        String filename = UUID.randomUUID() + "_" + originalFilename;
+
+        // Сохраняем файл
+        Path filePath = uploadPath.resolve(filename);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        // Возвращаем путь или имя файла для дальнейшего использования
+        return filePath.toString(); // Можно вернуть относительный путь или имя файла
     }
-
-
 }
+
+
 
 
 

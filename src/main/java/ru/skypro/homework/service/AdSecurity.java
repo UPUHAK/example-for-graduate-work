@@ -12,7 +12,7 @@ public class AdSecurity {
 
     public boolean isAdOwner(Integer adId, String username) {
         return adRepository.findById(adId)
-                .map(ad -> ad.getUser().getUsername().equals(username))
+                .map(ad -> ad.getUser().getEmail().equals(username))
                 .orElse(false);
     }
 }
