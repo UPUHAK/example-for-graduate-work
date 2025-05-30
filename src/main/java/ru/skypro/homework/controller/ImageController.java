@@ -13,7 +13,7 @@ import ru.skypro.homework.service.ImageService;
 import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 
-
+@CrossOrigin(value = "http://localhost:3000")
 @RestController
 @CrossOrigin(value = "http://localhost:3000")
 @RequestMapping("/api/images")
