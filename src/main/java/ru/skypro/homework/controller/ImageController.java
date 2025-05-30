@@ -8,7 +8,7 @@ import ru.skypro.homework.model.Image;
 import ru.skypro.homework.service.ImageService;
 
 
-
+@CrossOrigin(value = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/images")
 public class ImageController {

@@ -18,7 +18,7 @@ import ru.skypro.homework.repository.UserRepository;
 import java.util.Optional;
 
 @Slf4j
-@CrossOrigin(value = "http://localhost:8080")
+@CrossOrigin(value = "http://localhost:3000")
 @RestController
 public class AuthController {
 
