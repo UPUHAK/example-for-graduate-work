@@ -4,55 +4,64 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.hibernate.Hibernate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import ru.skypro.homework.dto.ImageDTO;
-import ru.skypro.homework.dto.NewPasswordDTO;
-import ru.skypro.homework.dto.UpdateUserDTO;
-import ru.skypro.homework.dto.UserDTO;;
+import ru.skypro.homework.dto.*;
+
 import ru.skypro.homework.exception.UserNotFoundException;
 import ru.skypro.homework.mapper.UserMapper;
+import ru.skypro.homework.model.Image;
 import ru.skypro.homework.model.User;
+import ru.skypro.homework.repository.ImageRepository;
 import ru.skypro.homework.repository.UserRepository;
 import ru.skypro.homework.service.CurrentUserService;
 import ru.skypro.homework.service.ImageService;
+import ru.skypro.homework.service.ImageStorageService;
 import ru.skypro.homework.service.UserService;
+
+
 
 import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    private UserRepository userRepository;
+
     private final CurrentUserService currentUserService;
     private final ImageService imageService;
-    private final UserRepository userRepository;
+    private final ImageRepository imageRepository;
+    private final ImageStorageService imageStorageService;
+
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
+
     @Override
-    @PreAuthorize("isAuthenticated()")
-    public UserDTO getCurrentUser () {
-        User user = currentUserService.getAuthenticatedUser ();
+    public UserDTO getCurrentUser() {
+        User user = currentUserService.getAuthenticatedUser();
         return userMapper.toDTO(user);
     }
 
     @Override
-    @PreAuthorize("isAuthenticated()")
-    public UserDTO updateUser (UpdateUserDTO updateUserDTO) {
-        User user = currentUserService.getAuthenticatedUser ();
+    public UserDTO updateUser(UpdateUserDTO updateUserDTO) {
+        User user = currentUserService.getAuthenticatedUser();
         userMapper.updateEntityFromDTO(updateUserDTO, user);
         userRepository.save(user);
         return userMapper.toDTO(user);
@@ -60,32 +69,39 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    @PreAuthorize("isAuthenticated()")
-    public void updateImage(MultipartFile file) {
+    public void updateImage(MultipartFile file) throws IOException {
         User user = currentUserService.getAuthenticatedUser (); // Получаем авторизованного пользователя
 
-        validateFile(file, user); // Проверяем файл
-        ImageDTO imageDTO = createImageDTO(user, file); // Создаем ImageDTO
-        saveImageToFileSystem(file, imageDTO); // Сохраняем изображение
+        validateFile(file); // Проверяем файл
+        String imageUrl = imageStorageService.store(file); // Сохраняем изображение и получаем URL
+
+        // Обновляем или создаём запись Image с ссылкой на файл
+        Image image = imageRepository.findByUserId(user.getId())
+                .orElseGet(() -> new Image(user));
+        image.setImageUrl(imageUrl);
+        imageRepository.save(image);
+
+        log.info("Пользователь {} успешно обновил аватар: {}", user.getId(), imageUrl);
     }
 
-    private void validateFile(MultipartFile file, User user) {
+    private void validateFile(MultipartFile file) {
         if (file.isEmpty()) {
-            log.warn("Пользователь {} попытался загрузить пустой файл.", user.getId());
+            log.warn("Попытка загрузки пустого файла.");
             throw new IllegalArgumentException("Ошибка: файл пустой!");
         }
 
         String contentType = file.getContentType();
         if (!"image/jpeg".equals(contentType) && !"image/png".equals(contentType)) {
-            log.warn("Пользователь {} загрузил неподдерживаемый тип файла: {}", user.getId(), contentType);
+            log.warn("Неподдерживаемый тип файла: {}", contentType);
             throw new IllegalArgumentException("Ошибка: поддерживаются только JPEG и PNG файлы.");
         }
 
         if (file.getSize() > 2 * 1024 * 1024) { // 2 МБ
-            log.warn("Пользователь {} загрузил файл, превышающий допустимый лимит.", user.getId());
+            log.warn("Размер файла превышает допустимый лимит.");
             throw new IllegalArgumentException("Ошибка: размер файла не должен превышать 2 МБ.");
         }
     }
+
 
     private ImageDTO createImageDTO(User user, MultipartFile file) {
         ImageDTO imageDTO = new ImageDTO();
@@ -102,15 +118,33 @@ public class UserServiceImpl implements UserService {
         return imageDTO;
     }
 
-    private void saveImageToFileSystem(MultipartFile file, ImageDTO imageDTO) {
+    public void saveImageToFileSystem(MultipartFile file, ImageDTO imageDTO) {
         try {
             String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
-            Path imagePath = Paths.get("path/to/save/" + originalFilename);
+            Path directory = Paths.get("C:\\Users\\пк\\Pictures\\Images");
+            Files.createDirectories(directory);
 
-            Files.createDirectories(imagePath.getParent());
+            Path imagePath = directory.resolve(originalFilename);
 
-            imageService.saveToDatabase(imageDTO, imagePath, file);
+            // Сохраняем файл на диск
+            Files.copy(file.getInputStream(), imagePath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Обновляем или создаём запись Image с ссылкой на файл
+            Optional<Image> optionalImage = imageRepository.findByUserId(imageDTO.getUserId());
+
+            Image image = optionalImage.orElseGet(() -> {
+                User user = userRepository.findById(imageDTO.getUserId())
+                        .orElseThrow(() -> new EntityNotFoundException("Пользователь с ID " + imageDTO.getUserId() + " не найден"));
+                Image newImage = new Image();
+                newImage.setUser(user);
+                return newImage;
+            });
+
+            image.setImageUrl(imagePath.toString());
+            imageRepository.save(image);
+
             log.info("Пользователь {} успешно обновил аватар: {}", imageDTO.getUserId(), originalFilename);
+
         } catch (EntityNotFoundException e) {
             log.error("Ошибка сохранения: пользователь не найден: {}", e.getMessage());
             throw new RuntimeException("Пользователь не найден.", e);
@@ -121,7 +155,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @PreAuthorize("hasRole('ADMIN')")
+    public void saveImageFromFilePath(String filePath, ImageDTO imageDTO) {
+
+    }
+
+
+    @Override
     public List<UserDTO> getAllUsers() {
         List<User> users = userRepository.findAll();
         return userMapper.toDTOList(users);
@@ -129,26 +168,24 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    @PreAuthorize("isAuthenticated()")
     public void setPassword(NewPasswordDTO newPassword) {
-        User user = currentUserService.getAuthenticatedUser ();
+        User user = currentUserService.getAuthenticatedUser();
         user.setPassword(passwordEncoder.encode(newPassword.getNewPassword()));
         userRepository.save(user);
     }
 
     @Override
-    @PreAuthorize("hasRole('ADMIN')")
-    public User createUser (UserDTO userDto) {
+    public User createUser(UserDTO userDto) {
         if (userRepository.existsByEmail(userDto.getEmail())) {
             throw new IllegalArgumentException("Email already exists");
         }
 
-        if (userRepository.existsByUsername(userDto.getUsername())) {
+        if (userRepository.existsByEmail(userDto.getEmail())) {
             throw new IllegalArgumentException("Username already exists");
         }
 
         User user = new User();
-        user.setUsername(userDto.getUsername());
+        user.setEmail(userDto.getEmail());
         user.setPassword(userDto.getPassword());
         user.setFirstName(userDto.getFirstName());
         user.setLastName(userDto.getLastName());
@@ -156,9 +193,44 @@ public class UserServiceImpl implements UserService {
         user.setRole(userDto.getRole());
         user.setEmail(userDto.getEmail());
 
-        log.info("Creating user with username: {}, email: {}, role: {}", user.getUsername(), user.getEmail(), user.getRole());
+        log.info("Creating user with username: {}, email: {}, role: {}", user.getEmail(), user.getEmail(), user.getRole());
         return userRepository.save(user);
     }
+    @Transactional
+    public UserDTO getUserWithComments(Integer userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User  not found"));
+
+        // Инициализация коллекции комментариев, если необходимо
+        Hibernate.initialize(user.getComments());
+
+        List<CommentDTO> commentDTOs = user.getComments().stream()
+                .map(comment -> {
+                    CommentDTO dto = new CommentDTO();
+                    dto.setAuthor(comment.getUser ().getId());
+                    dto.setAuthorImage(comment.getUser ().getAvatar() != null ? comment.getUser ().getAvatar().getUrl() : null);
+                    dto.setAuthorFirstName(comment.getUser ().getFirstName());
+                    dto.setCreatedAt(comment.getCreatedAt());
+                    dto.setPk(comment.getPk());
+                    dto.setText(comment.getText());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(user.getId());
+        userDTO.setEmail(user.getEmail());
+        userDTO.setFirstName(user.getFirstName());
+        userDTO.setLastName(user.getLastName());
+        userDTO.setPhone(user.getPhone());
+        userDTO.setRole(user.getRole());
+        userDTO.setAvatar(user.getAvatar() != null ? user.getAvatar().getUrl() : null);
+        userDTO.setComments(commentDTOs);
+
+        return userDTO;
+    }
+
+
 }
 
 

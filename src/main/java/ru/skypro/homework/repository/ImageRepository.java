@@ -9,5 +9,5 @@ public interface ImageRepository extends JpaRepository<Image, Integer> {
 
     Optional<Image> findByUserId(Integer userId);
 
-    Optional<Image> findById(Long id);
+    Optional<Image> findById(Integer id);
 }

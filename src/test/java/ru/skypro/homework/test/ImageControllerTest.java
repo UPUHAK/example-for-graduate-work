@@ -35,7 +35,7 @@ public class ImageControllerTest {
 
     @BeforeEach
     public void setUp() {
-        List<Image> mockImages = Arrays.asList(new Image(1, "image1.png", new byte[0], null, null));
+        List<Image> mockImages = Arrays.asList(new Image(1, "url", null, null));
         when(imageService.getAllImages()).thenReturn(mockImages);
     }
 
@@ -44,7 +44,7 @@ public class ImageControllerTest {
     @WithMockUser (roles = "USER")
     public void testGetImageByIdFound() throws Exception {
         // Подготовка данных для теста
-        Image image = new Image(1, "image.png", new byte[0], null, null);
+        Image image = new Image(1, "url", null, null);
 
         when(imageService.getImageById(1)).thenReturn(Optional.of(image));
 

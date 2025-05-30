@@ -32,7 +32,7 @@ public class CurrentUserService {
         }
         String username = auth.getName();
         log.info("Получаем пользователя по username: {}", username);
-        return userRepository.findByUsername(username)
+        return userRepository.findByEmail(username)
                 .orElseThrow(() -> new UserNotFoundException("Пользователь с именем " + username + " не найден"));
     }
 

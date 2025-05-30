@@ -4,14 +4,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ru.skypro.homework.model.Comment;
+import ru.skypro.homework.model.User;
 
 public interface CommentRepository extends JpaRepository<Comment, Integer> {
 
 
-    @Query("SELECT COUNT(c) FROM Comment c WHERE c.ad.pk = :adId")
-    long countByAdId(@Param("adId") Integer adId);
+    long countByAdPk(Integer adPk);
+
+    long countByUserId(Integer userId);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.comments WHERE u.id = :id")
+    User findByIdWithComments(@Param("id") Integer id);
 
 
-    @Query("SELECT COUNT(c) FROM Comment c WHERE c.user.id = :userId")
-    long countByUserId(@Param("userId") Long userId);
+
 }

@@ -2,6 +2,8 @@ package ru.skypro.homework.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import ru.skypro.homework.dto.Role;
 
 import javax.persistence.*;
@@ -9,7 +11,10 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -25,11 +30,6 @@ public class User {
     @Schema(description = "Уникальный идентификатор пользователя", example = "1")
     private Integer id;
 
-    @Email(message = "Email должен быть действительным")
-    @NotBlank(message = "Email обязателен")
-    @Column(name = "email", nullable = false, unique = true)
-    @Schema(description = "Email адрес пользователя", example = "user@example.com")
-    private String email;
 
     @NotBlank(message = "Имя обязательно")
     @Size(min = 2, max = 16)
@@ -58,13 +58,13 @@ public class User {
     @Schema(description = "URL профиля изображения пользователя", example = "http://example.com/image.jpg")
     private String image;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "user")
     @Schema(description = "Список комментариев пользователя")
-    private List<Comment> comments;
+    private Set<Comment> comments = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Schema(description = "Список объявлений пользователя")
-    private List<Ad> ads;
+    private Set<Ad> ads = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "image_id")
@@ -77,11 +77,9 @@ public class User {
     @Schema(description = "Пароль пользователя")
     private String password;
 
-    @NotBlank(message = "Имя пользователя обязательно")
-    @Size(min = 3, max = 16)
-    @Column(name = "username", nullable = false, unique = true)
-    @Schema(description = "Имя пользователя для входа в систему", example = "ivan123")
-    private String username;
+    @Schema(description = "Логин пользователя", example = "ivan@example.com")
+    @Email(message = "Email должен быть корректным адресом электронной почты")
+    private String email;
 
     public void setAuthorize(boolean authorize) {
         isAuthorize = authorize;
@@ -91,6 +89,13 @@ public class User {
     @Schema(description = "Флаг, указывающий, авторизован ли пользователь", example = "true")
     private boolean isAuthorize;
 
+    public List<GrantedAuthority> getAuthorities() {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        if (this.role != null) {
+            authorities.add(new SimpleGrantedAuthority(this.role.name()));
+        }
+        return authorities;
+    }
 
 }
 
