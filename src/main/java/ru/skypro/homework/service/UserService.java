@@ -44,6 +44,8 @@ public interface UserService {
 
     void saveImageFromFilePath(String filePath, ImageDTO imageDTO);
 
+    void saveImageToFileSystem(MultipartFile file, ImageDTO imageDTO);
+
 
 }
 

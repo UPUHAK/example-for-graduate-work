@@ -36,13 +36,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     private final CurrentUserService currentUserService;
     private final ImageService imageService;
@@ -52,25 +51,27 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
-
     @Override
-    public UserDTO getCurrentUser() {
-        User user = currentUserService.getAuthenticatedUser();
+    public UserDTO getCurrentUser () {
+        User user = currentUserService.getAuthenticatedUser ();
+        log.info("Получение текущего пользователя: {}", user.getEmail());
         return userMapper.toDTO(user);
     }
 
     @Override
-    public UserDTO updateUser(UpdateUserDTO updateUserDTO) {
-        User user = currentUserService.getAuthenticatedUser();
+    public UserDTO updateUser (UpdateUserDTO updateUserDTO) {
+        User user = currentUserService.getAuthenticatedUser ();
+        log.info("Обновление пользователя: {}", user.getEmail());
         userMapper.updateEntityFromDTO(updateUserDTO, user);
         userRepository.save(user);
+        log.info("Пользователь {} успешно обновлён", user.getEmail());
         return userMapper.toDTO(user);
     }
-
 
     @Override
     public void updateImage(MultipartFile file) throws IOException {
         User user = currentUserService.getAuthenticatedUser (); // Получаем авторизованного пользователя
+        log.info("Пользователь {} пытается обновить аватар", user.getId());
 
         validateFile(file); // Проверяем файл
         String imageUrl = imageStorageService.store(file); // Сохраняем изображение и получаем URL
@@ -101,7 +102,6 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Ошибка: размер файла не должен превышать 2 МБ.");
         }
     }
-
 
     private ImageDTO createImageDTO(User user, MultipartFile file) {
         ImageDTO imageDTO = new ImageDTO();
@@ -136,7 +136,7 @@ public class UserServiceImpl implements UserService {
                 User user = userRepository.findById(imageDTO.getUserId())
                         .orElseThrow(() -> new EntityNotFoundException("Пользователь с ID " + imageDTO.getUserId() + " не найден"));
                 Image newImage = new Image();
-                newImage.setUser(user);
+                newImage.setUser (user);
                 return newImage;
             });
 
@@ -156,32 +156,32 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void saveImageFromFilePath(String filePath, ImageDTO imageDTO) {
-
+        // Реализация метода
+        log.info("Сохранение изображения по пути: {}", filePath);
     }
-
 
     @Override
     public List<UserDTO> getAllUsers() {
         List<User> users = userRepository.findAll();
+        log.info("Получение всех пользователей. Всего пользователей: {}", users.size());
         return userMapper.toDTOList(users);
     }
 
     @Transactional
     @Override
     public void setPassword(NewPasswordDTO newPassword) {
-        User user = currentUserService.getAuthenticatedUser();
+        User user = currentUserService.getAuthenticatedUser ();
+        log.info("Смена пароля для пользователя: {}", user.getEmail());
         user.setPassword(passwordEncoder.encode(newPassword.getNewPassword()));
         userRepository.save(user);
+        log.info("Пароль для пользователя {} успешно изменён", user.getEmail());
     }
 
     @Override
-    public User createUser(UserDTO userDto) {
+    public User createUser (UserDTO userDto) {
         if (userRepository.existsByEmail(userDto.getEmail())) {
+            log.warn("Пользователь с email {} уже существует", userDto.getEmail());
             throw new IllegalArgumentException("Email already exists");
-        }
-
-        if (userRepository.existsByEmail(userDto.getEmail())) {
-            throw new IllegalArgumentException("Username already exists");
         }
 
         User user = new User();
@@ -191,16 +191,17 @@ public class UserServiceImpl implements UserService {
         user.setLastName(userDto.getLastName());
         user.setPhone(userDto.getPhone());
         user.setRole(userDto.getRole());
-        user.setEmail(userDto.getEmail());
 
-        log.info("Creating user with username: {}, email: {}, role: {}", user.getEmail(), user.getEmail(), user.getRole());
+        log.info("Создание пользователя с email: {}, роль: {}", user.getEmail(), user.getRole());
         return userRepository.save(user);
     }
+
     @Transactional
     public UserDTO getUserWithComments(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User  not found"));
 
+        log.info("Получение пользователя с ID: {}", userId);
         // Инициализация коллекции комментариев, если необходимо
         Hibernate.initialize(user.getComments());
 
@@ -227,11 +228,11 @@ public class UserServiceImpl implements UserService {
         userDTO.setAvatar(user.getAvatar() != null ? user.getAvatar().getUrl() : null);
         userDTO.setComments(commentDTOs);
 
+        log.info("Пользователь с ID {} успешно получен с {} комментариями", userId, commentDTOs.size());
         return userDTO;
     }
-
-
 }
+
 
 
 

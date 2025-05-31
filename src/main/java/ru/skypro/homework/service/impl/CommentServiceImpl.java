@@ -17,6 +17,7 @@ import ru.skypro.homework.repository.UserRepository;
 import ru.skypro.homework.repository.AdRepository;
 import ru.skypro.homework.service.CommentService;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,11 +46,24 @@ public class CommentServiceImpl implements CommentService {
         return commentMapper.toDTO(savedComment);
     }
 
+    @Override
+    public List<CommentDTO> getCommentsByAdPk(Integer adPk) {
+        // Проверяем, существует ли объявление
+        adRepository.findById(adPk)
+                .orElseThrow(() -> new AdNotFoundException("Ad not found"));
+
+        List<Comment> comments = commentRepository.findByAdPk(adPk);
+        return comments.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+
     @PreAuthorize("hasRole('ADMIN') or @commentSecurity.isCommentOwner(#id, authentication.name)")
     @Override
     @Transactional
-    public CommentDTO updateComment(Integer id, CommentDTO commentDTO) {
-        Comment comment = commentRepository.findById(id)
+    public CommentDTO updateComment(Integer pk, CommentDTO commentDTO) {
+        Comment comment = commentRepository.findById(pk)
                 .orElseThrow(() -> new CommentNotFoundException("Comment not found"));
 
         comment.setText(commentDTO.getText());
@@ -60,7 +74,34 @@ public class CommentServiceImpl implements CommentService {
     @PreAuthorize("hasRole('ADMIN') or @commentSecurity.isCommentOwner(#id, authentication.name)")
     @Override
     @Transactional
-    public void deleteComment(Integer id) {
-        commentRepository.deleteById(id); // Упрощение метода
+    public void deleteComment(Integer pk) {
+        commentRepository.deleteById(pk); // Упрощение метода
     }
+    private CommentDTO toDto(Comment comment) {
+        CommentDTO dto = new CommentDTO();
+        dto.setPk(comment.getPk()); // Установите id комментария
+        dto.setText(comment.getText()); // Установите текст комментария
+        dto.setCreatedAt(comment.getCreatedAt()); // Установите дату создания комментария
+
+        // Проверяем, что user не равен null
+        User user = comment.getUser (); // Используйте getUser () вместо getAuthor()
+        if (user != null) {
+            dto.setAuthor(user.getId()); // Установите id автора комментария
+            dto.setAuthorImage(user.getImage()); // Установка ссылки на аватар (если есть)
+            dto.setAuthorFirstName(user.getFirstName()); // Установка имени автора (если есть)
+        }
+
+        return dto;
+    }
+
+    @Override
+    public List<CommentDTO> getCommentsByAd(Integer adPk) {
+        List<Comment> comments = commentRepository.findByAdPk(adPk);
+        return comments.stream()
+                .map(commentMapper::toDTO) // Предполагается, что у вас есть метод для преобразования Comment в CommentDTO
+                .collect(Collectors.toList());
+    }
+
+
+
 }

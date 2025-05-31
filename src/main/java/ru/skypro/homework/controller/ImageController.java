@@ -14,6 +14,10 @@ import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 @RestController
 @CrossOrigin(value = "http://localhost:3000")
 @RequestMapping("/api/images")
@@ -22,7 +26,11 @@ public class ImageController {
     @Autowired
     private ImageService imageService;
 
-
+    @Operation(summary = "Получение изображения по ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Изображение успешно найдено"),
+            @ApiResponse(responseCode = "404", description = "Изображение не найдено")
+    })
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<Image> getImageById(@PathVariable Integer id) {
@@ -35,6 +43,13 @@ public class ImageController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Загрузка изображения для пользователя")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Изображение успешно загружено"),
+            @ApiResponse(responseCode = "400", description = "Некорректный запрос"),
+            @ApiResponse(responseCode = "404", description = "Пользователь не найден"),
+            @ApiResponse(responseCode = "500", description = "Ошибка сервера")
+    })
     @PostMapping("/{userId}")
     public ResponseEntity<ImageDTO> uploadImage(@PathVariable Integer userId, @RequestParam("file") MultipartFile file) {
         try {
@@ -50,6 +65,7 @@ public class ImageController {
         }
     }
 }
+
 
 
 
