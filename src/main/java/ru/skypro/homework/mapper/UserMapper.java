@@ -5,6 +5,8 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.factory.Mappers;
 import ru.skypro.homework.dto.UpdateUserDTO;
 import ru.skypro.homework.dto.UserDTO;
+import ru.skypro.homework.model.Ad;
+import ru.skypro.homework.model.Image;
 import ru.skypro.homework.model.User;
 
 import java.util.List;
@@ -36,6 +38,24 @@ public interface UserMapper {
      Преобразование списка UserDTO в список User
      */
     List<User> toEntityList(List<UserDTO> dtos);
+
+    default String map(Image image) {
+        return image != null ? image.getImageUrl() : null; // Предполагается, что у вас есть метод getPath() в классе Image
+    }
+
+    /*
+     Преобразование String в Image
+     */
+    default Image map(String path) {
+        if (path == null) {
+            return null;
+        }
+        Image image = new Image();
+        image.setImageUrl(path);
+        return image;
+    }
+
+
 }
 
 
