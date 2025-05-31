@@ -2,19 +2,23 @@ package ru.skypro.homework.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.Setter;
+import lombok.ToString;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import java.util.List;
+import java.util.Objects;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity(name = "ads")
+@ToString(exclude = {"user", "comments", "images"})
 public class Ad {
 
     @Id
@@ -29,7 +33,6 @@ public class Ad {
 
     @Column(name = "price", nullable = false)
     @Schema(description = "Цена объявления")
-    @NonNull
     @Positive(message = "Цена должна быть положительной")
     private Integer price;
 
@@ -55,5 +58,17 @@ public class Ad {
     @Schema(description = "Список изображений, связанных с объявлением")
     private List<Image> images; // Список изображений, связанных с объявлением
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Ad)) return false;
+        Ad ad = (Ad) o;
+        return Objects.equals(pk, ad.pk);
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(pk);
+    }
 }
+
