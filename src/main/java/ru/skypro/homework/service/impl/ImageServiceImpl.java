@@ -19,13 +19,14 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import ru.skypro.homework.repository.UserRepository;
 import ru.skypro.homework.service.ImageService;
 import ru.skypro.homework.service.ImageStorageService;
 
 import javax.persistence.EntityNotFoundException;
+
+
 
 @Service
 public class ImageServiceImpl implements ImageService {
@@ -84,14 +85,7 @@ public class ImageServiceImpl implements ImageService {
         image.setUser (user);
         image.setImageUrl(imageUrl);
 
-        try {
-            return imageRepository.save(image);
-        } catch (Exception e) {
-            // Если сохранение в БД не удалось, удаляем файл из файловой системы
-            imageStorageService.delete(imageUrl);
-            log.error("Ошибка при сохранении изображения в базе данных для пользователя {}: {}", userId, e.getMessage());
-            throw new RuntimeException("Ошибка при сохранении данных в базе. Попробуйте снова.", e);
-        }
+        return imageRepository.save(image);
     }
 
     @Override
@@ -110,15 +104,20 @@ public class ImageServiceImpl implements ImageService {
     }
 
     @Override
-    public Image updateImage(Integer id, Image imageDetails) {
+    public Image updateImage(Integer id, MultipartFile file) {
         Optional<Image> existingImage = imageRepository.findById(id);
         if (existingImage.isPresent()) {
             Image imageToUpdate = existingImage.get();
-            imageToUpdate.setImageUrl(imageDetails.getImageUrl());
+
+            // Логика для обработки файла и получения URL
+            String imageUrl = saveImageToFileSystem(file); // Метод для сохранения файла и получения URL
+            imageToUpdate.setImageUrl(imageUrl);
+
             return imageRepository.save(imageToUpdate);
         }
         throw new ImageNotFoundException(id);
     }
+
 
     @Override
     public void deleteImage(Integer id) {
@@ -126,7 +125,10 @@ public class ImageServiceImpl implements ImageService {
             throw new EntityNotFoundException("Изображение с ID " + id + " не найдено.");
         }
 
-        imageRepository.deleteById(id);
+        // Получаем изображение для удаления, чтобы удалить файл из файловой системы
+        Image image = imageRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Изображение не найдено"));
+        imageStorageService.delete(image.getImageUrl()); // Удаляем файл из файловой системы
+        imageRepository.deleteById(id); // Удаляем запись из базы данных
     }
 
     @Override
@@ -150,32 +152,42 @@ public class ImageServiceImpl implements ImageService {
 
         return savedImage; // Возвращаем сохраненное изображение
     }
-    @Override
-    public String saveFile(MultipartFile file) throws IOException {
-        // Проверяем, что файл не пустой
-        if (file.isEmpty()) {
-            throw new IllegalArgumentException("Файл пустой");
+    private String saveImageToFileSystem(MultipartFile file) {
+        // Укажите путь, куда вы хотите сохранить изображение
+        String uploadDir = "/path/to/upload/directory/";
+        String fileName = file.getOriginalFilename();
+        Path filePath = Paths.get(uploadDir + fileName);
+
+        try {
+            // Сохранение файла
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            return "/images/" + fileName; // Верните URL к изображению (или измените по вашему усмотрению)
+        } catch (IOException e) {
+            throw new RuntimeException("Не удалось сохранить файл: " + e.getMessage());
         }
-
-        // Получаем оригинальное имя файла
-        String originalFilename = file.getOriginalFilename();
-
-        // Путь для сохранения файла (пример)
-        Path uploadPath = Paths.get("uploads/images");
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath); // Создаем директории, если они не существуют
-        }
-
-        // Генерируем уникальное имя файла, чтобы избежать конфликтов
-        String filename = UUID.randomUUID() + "_" + originalFilename;
-
-        // Сохраняем файл
-        Path filePath = uploadPath.resolve(filename);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        // Возвращаем путь или имя файла для дальнейшего использования
-        return filePath.toString(); // Можно вернуть относительный путь или имя файла
     }
+    @Override
+    @Transactional
+    public Image updateImage(Integer id, Image imageDetails) {
+        // Находим существующее изображение по ID
+        Image existingImage = imageRepository.findById(id)
+                .orElseThrow(() -> new ImageNotFoundException(id)); // Исключение, если изображение не найдено
+
+        // Обновляем поля существующего изображения
+        if (imageDetails.getImageUrl() != null) {
+            existingImage.setImageUrl(imageDetails.getImageUrl());
+        }
+        // Добавьте другие поля, которые нужно обновить, например:
+        // if (imageDetails.getSomeOtherField() != null) {
+        //     existingImage.setSomeOtherField(imageDetails.getSomeOtherField());
+        // }
+
+        // Сохраняем обновлённое изображение
+        return imageRepository.save(existingImage);
+    }
+
+
+
 }
 
 

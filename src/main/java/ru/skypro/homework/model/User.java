@@ -16,7 +16,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"ads", "comments"}) // исключаем поля, которые могут создавать циклы
+@EqualsAndHashCode(exclude = {"ads", "comments"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity

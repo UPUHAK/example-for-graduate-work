@@ -20,6 +20,8 @@ public interface ImageService {
 
     Image updateImage(Integer id, Image imageDetails);
 
+    Image updateImage(Integer id, MultipartFile file);
+
     void deleteImage(Integer id);
 
     Image saveImage(Integer id, MultipartFile file) throws IOException;
@@ -29,7 +31,7 @@ public interface ImageService {
 
     ImageDTO convertToDto(Image savedImage);
 
-    String saveFile(MultipartFile file) throws IOException;
+
 }
 
 

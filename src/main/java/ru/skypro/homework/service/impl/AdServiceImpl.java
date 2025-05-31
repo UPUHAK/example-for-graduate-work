@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AdServiceImpl implements AdService {
@@ -27,12 +28,6 @@ public class AdServiceImpl implements AdService {
     public AdServiceImpl(AdRepository adRepository, AdMapper adMapper) {
         this.adRepository = adRepository;
         this.adMapper = adMapper;
-    }
-
-    // Получение всех объявлений
-    @Override
-    public List<AdDTO> getAllAds() {
-        return adMapper.toDTOList(adRepository.findAll());
     }
 
     // Добавление объявления
@@ -105,6 +100,22 @@ public class AdServiceImpl implements AdService {
         Path filePath = Paths.get(directory, fileName);
         Files.copy(image.getInputStream(), filePath);
         return filePath.toString(); // Возвращаем путь к изображению
+    }
+    public List<AdDTO> getAllAds() {
+        List<Ad> ads = adRepository.findAll();
+        return ads.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private AdDTO convertToDTO(Ad ad) {
+        AdDTO adDTO = new AdDTO();
+        adDTO.setPk(ad.getPk());
+        adDTO.setTitle(ad.getTitle());
+        adDTO.setPrice(ad.getPrice());
+        adDTO.setImage(ad.getImage());
+        adDTO.setAuthor(ad.getUser ().getId());
+        return adDTO;
     }
 }
 

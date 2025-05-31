@@ -42,10 +42,10 @@ public interface UserService {
     User createUser (UserDTO userDto);
     UserDTO getUserWithComments(Integer id);
 
-    void saveImageFromFilePath(String filePath, ImageDTO imageDTO);
 
-    void saveImageToFileSystem(MultipartFile file, ImageDTO imageDTO);
+    String getUserAvatar(Integer userId);
 
+    void updateImageForUser(Integer currentUserId, MultipartFile file);
 
 }
 
