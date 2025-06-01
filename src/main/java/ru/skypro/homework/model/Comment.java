@@ -38,6 +38,6 @@ public class Comment {
     @Column(name = "text", nullable = false)
     @Schema(description = "текст комментария")
     private String text;
-
 }
+
 
