@@ -1,4 +1,5 @@
 databaseChangeLog:
+
   -  include:
         file: db/scripts/ads.sql
   - include:

@@ -12,6 +12,7 @@ import ru.skypro.homework.service.CommentService;
 
 import java.util.List;
 
+@CrossOrigin(value = "http://localhost:3000")
 @RestController
 @RequestMapping("/ads")
 @RequiredArgsConstructor

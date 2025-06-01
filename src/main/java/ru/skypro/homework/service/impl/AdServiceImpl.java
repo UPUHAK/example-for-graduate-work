@@ -2,7 +2,9 @@ package ru.skypro.homework.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+
 import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.AdDTO;
@@ -53,6 +55,7 @@ public class AdServiceImpl implements AdService {
     }
 
     // Удаление объявления
+    @PreAuthorize("hasRole('ADMIN') or @adSecurity.isAdOwner(#id, authentication.name)")
     @Override
     @Transactional
     public void deleteAd(Integer id) {
@@ -60,6 +63,7 @@ public class AdServiceImpl implements AdService {
     }
 
     // Обновление информации об объявлении
+    @PreAuthorize("hasRole('ADMIN') or @adSecurity.isAdOwner(#id, authentication.name)")
     @Override
     @Transactional
     public AdDTO updateAd(Integer id, AdDTO adDTO) {
