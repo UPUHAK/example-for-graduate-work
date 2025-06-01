@@ -33,25 +33,33 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/set_password")
-    public ResponseEntity<Void> setPassword(@RequestBody @Valid NewPasswordDTO newPassword) {
+    public ResponseEntity<String> setPassword(@RequestBody @Valid NewPasswordDTO newPassword) {
         log.info("Запрос на смену пароля");
+
+        // Проверка на null
+        if (newPassword == null) {
+            log.error("Ошибка: Новый пароль не может быть null");
+            return ResponseEntity.badRequest().body("Новый пароль не может быть null");
+        }
+
         try {
             userService.setPassword(newPassword);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().body("Пароль успешно изменён");
         } catch (UserNotFoundException e) {
             log.error("Ошибка: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Пользователь не найден");
         } catch (InvalidCurrentPasswordException e) {
             log.error("Ошибка: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Неверный текущий пароль");
         } catch (InvalidPasswordException e) {
             log.error("Ошибка: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("Новый пароль не соответствует требованиям");
         } catch (Exception e) {
             log.error("Ошибка при смене пароля: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Произошла ошибка при изменении пароля");
         }
     }
+
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
