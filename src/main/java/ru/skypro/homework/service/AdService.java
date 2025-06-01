@@ -13,6 +13,7 @@ public interface AdService {
     AdDTO updateAd(Integer id, AdDTO adDTO);
     List<AdDTO> getAdsByAuthor(String username);
     AdDTO updateAdImage(Integer id, MultipartFile image);
+    List<AdDTO> getAdsMe(Integer userId);
 }
 
 

@@ -48,9 +48,9 @@ public class WebSecurityConfig {
                 .cors()
                 .and()
                 .authorizeHttpRequests(authorization -> authorization
-                        .mvcMatchers(AUTH_WHITELIST).permitAll() // Ваши публичные эндпоинты
+                        .mvcMatchers(AUTH_WHITELIST).permitAll() //  публичные эндпоинты
                         .mvcMatchers("/users/me/image").authenticated()
-                        .mvcMatchers("/ads/**", "/users/**").authenticated() // Остальные эндпоинты требуют аутентификации
+                        .mvcMatchers("/ads/**", "/users/**").authenticated()
                         .mvcMatchers("/admin/**").hasAuthority("ADMIN")
                 )
                 .exceptionHandling()
@@ -58,7 +58,7 @@ public class WebSecurityConfig {
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
                 })
                 .and()
-                .httpBasic(); // Убедитесь, что это здесь
+                .httpBasic();
         return http.build();
     }
 

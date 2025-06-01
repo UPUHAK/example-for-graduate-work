@@ -2,12 +2,15 @@ package ru.skypro.homework.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
+import org.springframework.dao.DataAccessException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.*;
+import ru.skypro.homework.exception.InvalidCurrentPasswordException;
+import ru.skypro.homework.exception.InvalidPasswordException;
 import ru.skypro.homework.exception.UserNotFoundException;
 import ru.skypro.homework.mapper.UserMapper;
 import ru.skypro.homework.model.Image;
@@ -15,13 +18,13 @@ import ru.skypro.homework.model.User;
 import ru.skypro.homework.repository.ImageRepository;
 import ru.skypro.homework.repository.UserRepository;
 import ru.skypro.homework.service.CurrentUserService;
-import ru.skypro.homework.service.CurrentUserService;
 import ru.skypro.homework.service.ImageService;
 import ru.skypro.homework.service.ImageStorageService;
 import ru.skypro.homework.service.UserService;
 
 import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,31 +40,51 @@ public class UserServiceImpl implements UserService {
     private final ImageStorageService imageStorageService;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final Path uploadDir;
+
+    public Path getUploadDir() {
+        return uploadDir;
+    }
+
 
     @Override
     public UserDTO getCurrentUser () {
         User user = currentUserService.getAuthenticatedUser ();
-        log.info("Получение текущего пользователя: {}", user.getEmail());
-        return userMapper.toDTO(user);
+        if (user != null) {
+            return userMapper.toDTO(user);
+        }
+        throw new UsernameNotFoundException("Пользователь не найден");
     }
 
+    @Transactional
     @Override
     public UserDTO updateUser (UpdateUserDTO updateUserDTO) {
         User user = currentUserService.getAuthenticatedUser ();
         log.info("Обновление пользователя: {}", user.getEmail());
+
         userMapper.updateEntityFromDTO(updateUserDTO, user);
         userRepository.save(user);
         log.info("Пользователь {} успешно обновлён", user.getEmail());
         return userMapper.toDTO(user);
     }
 
-    @Override
+
+
+
     @Transactional
-    public void updateImage(MultipartFile file) throws IOException {
-        User user = currentUserService.getAuthenticatedUser (); // Получаем авторизованного пользователя
+    @Override
+    public void updateUserImage(MultipartFile file) throws IOException {
+        User user = currentUserService.getAuthenticatedUser ();
         log.info("Пользователь {} пытается обновить аватар", user.getId());
 
-        imageService.updateImageForUser (user.getId(), file); // Используем метод из ImageService
+        String imageUrl = imageStorageService.store(file);
+        Image avatar = new Image();
+        avatar.setImageUrl(imageUrl);
+        avatar.setUser (user);
+
+        imageRepository.save(avatar);
+        user.setAvatar(avatar);
+        userRepository.save(user);
 
         log.info("Пользователь {} успешно обновил аватар", user.getId());
     }
@@ -76,15 +99,69 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void setPassword(NewPasswordDTO newPassword) {
-        User user = currentUserService.getAuthenticatedUser ();
-        log.info("Смена пароля для пользователя: {}", user.getEmail());
-        user.setPassword(passwordEncoder.encode(newPassword.getNewPassword()));
-        userRepository.save(user);
-        log.info("Пароль для пользователя {} успешно изменён", user.getEmail());
+        User currentUser  = currentUserService.getAuthenticatedUser ();
+        if (currentUser  == null) {
+            log.error("Пользователь не найден при смене пароля");
+            throw new UserNotFoundException("Пользователь не найден");
+        }
+
+        log.info("Аутентифицированный пользователь: {}", currentUser );
+
+        // Логируем email для проверки
+        String email = currentUser .getEmail();
+        log.info("Запрос на получение пользователя с email: {}", email);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+
+        // Проверяем текущий пароль
+        if (!passwordEncoder.matches(newPassword.getCurrentPassword(), user.getPassword())) {
+            log.error("Текущий пароль неверен для пользователя: {}", user.getEmail());
+            throw new InvalidCurrentPasswordException("Текущий пароль неверен");
+        }
+
+        // Валидация нового пароля
+        validatePasswordComplexity(newPassword.getNewPassword());
+        log.info("Новый пароль прошел валидацию для пользователя: {}", user.getEmail());
+
+        // Устанавливаем новый закодированный пароль
+        String encodedPassword = passwordEncoder.encode(newPassword.getNewPassword());
+        user.setPassword(encodedPassword);
+
+        try {
+            userRepository.save(user);
+            log.info("Пароль для пользователя {} успешно изменён", user.getEmail());
+        } catch (DataAccessException e) {
+            log.error("Ошибка при сохранении пользователя {}: {}", user.getEmail(), e.getMessage());
+            throw new RuntimeException("Не удалось изменить пароль пользователя", e);
+        }
     }
 
+
+
+
+
+
+
+
+    private void validatePasswordComplexity(String password) {
+        if (password.length() < 8) {
+            throw new InvalidPasswordException("Пароль должен содержать не менее 8 символов");
+        }
+        if (!password.matches(".*\\d.*")) {
+            throw new InvalidPasswordException("Пароль должен содержать хотя бы одну цифру");
+        }
+        if (!password.matches(".*[A-Z].*")) {
+            throw new InvalidPasswordException("Пароль должен содержать хотя бы одну заглавную букву");
+        }
+        if (!password.matches(".*[!@#$%^&*()].*")) {
+            throw new InvalidPasswordException("Пароль должен содержать хотя бы один специальный символ");
+        }
+    }
+
+
     @Override
-    public User createUser (UserDTO userDto) {
+    public User createUser(UserDTO userDto) {
         if (userRepository.existsByEmail(userDto.getEmail())) {
             log.warn("Пользователь с email {} уже существует", userDto.getEmail());
             throw new IllegalArgumentException("Email already exists");
@@ -139,6 +216,7 @@ public class UserServiceImpl implements UserService {
 
         log.info("Получение аватара для пользователя с ID: {}", userId);
         Image avatar = user.getAvatar(); // Предполагается, что у пользователя есть поле avatar, которое ссылается на Image
+
         if (avatar != null) {
             log.info("Аватар пользователя с ID {} получен: {}", userId, avatar.getImageUrl());
             return avatar.getImageUrl(); // Возвращаем URL аватара
@@ -149,9 +227,36 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateImageForUser(Integer currentUserId, MultipartFile file) {
+    @Transactional
+    public void updateImageForUser (Integer currentUserId, MultipartFile file) {
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID " + currentUserId + " не найден"));
 
+        log.info("Пользователь {} обновляет аватар", user.getEmail());
+
+        try {
+            // Сохраняем файл через ImageStorageService и получаем URL
+            String imageUrl = imageStorageService.store(file);
+
+            // Создаем новый объект Image и связываем его с пользователем
+            Image avatar = new Image();
+            avatar.setImageUrl(imageUrl);
+            avatar.setUser (user);
+
+            // Сохраняем аватар в базе данных
+            imageRepository.save(avatar);
+
+            // Обновляем пользователя с новым аватаром
+            user.setAvatar(avatar);
+            userRepository.save(user);
+
+            log.info("Аватар для пользователя {} успешно обновлён: {}", user.getEmail(), imageUrl);
+        } catch (IOException e) {
+            log.error("Ошибка при обновлении аватара для пользователя {}: {}", user.getEmail(), e.getMessage());
+            throw new RuntimeException("Не удалось обновить аватар", e);
+        }
     }
+
 }
 
 

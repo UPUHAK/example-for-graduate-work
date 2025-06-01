@@ -84,10 +84,7 @@ public class User {
     @Email(message = "Email должен быть корректным адресом электронной почты")
     private String email;
 
-    public void setAuthorize(boolean authorize) {
-        isAuthorize = authorize;
-    }
-
+    @Setter
     @Column(name = "is_authorize", nullable = false)
     @Schema(description = "Флаг, указывающий, авторизован ли пользователь", example = "true")
     private boolean isAuthorize;

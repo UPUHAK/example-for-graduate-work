@@ -1,11 +1,10 @@
 package ru.skypro.homework.mapper;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import org.mapstruct.factory.Mappers;
 import ru.skypro.homework.dto.UpdateUserDTO;
 import ru.skypro.homework.dto.UserDTO;
-import ru.skypro.homework.model.Ad;
 import ru.skypro.homework.model.Image;
 import ru.skypro.homework.model.User;
 
@@ -27,7 +26,9 @@ public interface UserMapper {
     /*
      Обновление User из UpdateUser DTO
      */
-    void updateEntityFromDTO(UpdateUserDTO updateDTO, @MappingTarget User user);
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    void updateEntityFromDTO(UpdateUserDTO dto, @MappingTarget User entity);
 
     /*
      Преобразование списка User в список UserDTO
@@ -39,12 +40,15 @@ public interface UserMapper {
      */
     List<User> toEntityList(List<UserDTO> dtos);
 
+    /*
+     Преобразование Image в String (URL)
+     */
     default String map(Image image) {
-        return image != null ? image.getImageUrl() : null; // Предполагается, что у вас есть метод getPath() в классе Image
+        return image != null ? image.getImageUrl() : null;
     }
 
     /*
-     Преобразование String в Image
+     Преобразование String (URL) в Image
      */
     default Image map(String path) {
         if (path == null) {
@@ -54,8 +58,7 @@ public interface UserMapper {
         image.setImageUrl(path);
         return image;
     }
-
-
 }
+
 
 
