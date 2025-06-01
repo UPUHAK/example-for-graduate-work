@@ -1,6 +1,8 @@
 package ru.skypro.homework.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.AdDTO;
@@ -15,11 +17,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class AdServiceImpl implements AdService {
+
+    @Value("${image.upload.dir}")
+    private String uploadDir;
 
     private final AdRepository adRepository;
     private final AdMapper adMapper;
@@ -79,8 +85,15 @@ public class AdServiceImpl implements AdService {
     public AdDTO updateAdImage(Integer id, MultipartFile image) {
         Ad ad = adRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Ad not found"));
+
+        // Проверка, что файл - изображение
+        String contentType = image.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Uploaded file is not an image");
+        }
+
         try {
-            String imagePath = saveImage(image); // Реализуйте этот метод
+            String imagePath = saveImage(image);
             ad.setImage(imagePath);
             Ad updatedAd = adRepository.save(ad);
             return adMapper.toDTO(updatedAd);
@@ -90,15 +103,19 @@ public class AdServiceImpl implements AdService {
     }
 
     private String saveImage(MultipartFile image) throws IOException {
-
-        String directory = "path/to/images"; // Укажите реальный путь к директории для сохранения
-        if (!new File(directory).exists()) {
-            new File(directory).mkdirs(); // Создание директории, если она не существует
+        File dir = new File(uploadDir);
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new IOException("Could not create upload directory: " + uploadDir);
         }
+
         String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
-        Path filePath = Paths.get(directory, fileName);
-        Files.copy(image.getInputStream(), filePath);
-        return filePath.toString(); // Возвращаем путь к изображению
+        Path destinationPath = Paths.get(uploadDir).resolve(fileName).normalize();
+
+        // Копируем файл, перезаписывая, если уже существует
+        Files.copy(image.getInputStream(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
+
+        // Возвращаем относительный путь, например: "images/123456_filename.jpg"
+        return fileName;
     }
     @Override
     public List<AdDTO> getAllAds() {

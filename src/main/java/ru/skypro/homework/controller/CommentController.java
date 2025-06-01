@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.skypro.homework.dto.CommentDTO;
 import ru.skypro.homework.service.CommentService;
@@ -37,8 +36,9 @@ public class CommentController {
             @ApiResponse(responseCode = "400", description = "Некорректный запрос")
     })
     @PostMapping("/{id}/comments")
-    public ResponseEntity<CommentDTO> addComment(@RequestBody CommentDTO commentDTO) {
-        CommentDTO createdComment = commentService.addComment(commentDTO);
+    public ResponseEntity<CommentDTO> addComment(@PathVariable Integer id,
+                                                 @RequestBody CommentDTO commentDTO) {
+        CommentDTO createdComment = commentService.addComment(id, commentDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdComment);
     }
 
@@ -47,10 +47,10 @@ public class CommentController {
             @ApiResponse(responseCode = "200", description = "Комментарий успешно обновлен"),
             @ApiResponse(responseCode = "404", description = "Комментарий не найден")
     })
-    @PutMapping("/{id}/comments")
-    public ResponseEntity<CommentDTO> updateComment(@PathVariable Integer id,
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<CommentDTO> updateComment(@PathVariable Integer commentId,
                                                     @RequestBody CommentDTO commentDTO) {
-        CommentDTO updatedComment = commentService.updateComment(id, commentDTO);
+        CommentDTO updatedComment = commentService.updateComment(commentId, commentDTO);
         return ResponseEntity.ok(updatedComment);
     }
 
@@ -59,10 +59,11 @@ public class CommentController {
             @ApiResponse(responseCode = "204", description = "Комментарий успешно удален"),
             @ApiResponse(responseCode = "404", description = "Комментарий не найден")
     })
-    @DeleteMapping("/{id}/comments/{commentId}")
+    @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<Void> deleteComment(@PathVariable Integer commentId) {
         commentService.deleteComment(commentId);
         return ResponseEntity.noContent().build();
     }
 }
+
 

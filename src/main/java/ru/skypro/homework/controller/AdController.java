@@ -3,8 +3,8 @@ package ru.skypro.homework.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,13 +23,9 @@ import ru.skypro.homework.repository.UserRepository;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.Valid;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
+
 
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,8 +50,23 @@ public class AdController {
     private final ImageAdService imageAdService;
     private final ImageMapper imageMapper;
 
-    @Autowired
     private final ImageStorageService imageStorageService;
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ImageNotProvidedException("Необходимо предоставить изображение для загрузки");
+        }
+
+        try {
+            String imagePath = imageStorageService.store(file);
+            return ResponseEntity.ok(imagePath);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ошибка при загрузке файла");
+        }
+    }
+
+
 
     @Operation(summary = "Добавление нового объявления")
     @ApiResponses(value = {
@@ -102,10 +113,11 @@ public class AdController {
         Ad ad = adRepository.findById(id)
                 .orElseThrow(() -> new AdNotFoundException("Объявление не найдено"));
 
-        // Используем маппер для преобразования сущности Ad в AdDTO
-        AdDTO adDTO = AdMapper.INSTANCE.toDTO(ad);
+        // Используем внедренный маппер для преобразования сущности Ad в AdDTO
+        AdDTO adDTO = adMapper.toDTO(ad);
         return ResponseEntity.ok(adDTO);
     }
+
 
 
     @Operation(summary = "Обновление объявления по ID")
@@ -120,15 +132,15 @@ public class AdController {
         Ad ad = adRepository.findById(id)
                 .orElseThrow(() -> new AdNotFoundException("Объявление не найдено"));
 
-        // Используем маппер для обновления полей сущности Ad
-        Ad updatedAd = AdMapper.INSTANCE.toEntity(adDTO);
+        // Используем внедренный маппер для обновления полей сущности Ad
+        Ad updatedAd = adMapper.toEntity(adDTO);
         updatedAd.setPk(ad.getPk()); // Сохраняем ID, чтобы обновить существующее объявление
 
         // Сохраняем обновленное объявление в базе данных
         Ad savedAd = adRepository.save(updatedAd);
 
         // Преобразуем обратно в DTO
-        AdDTO updatedAdDTO = AdMapper.INSTANCE.toDTO(savedAd);
+        AdDTO updatedAdDTO = adMapper.toDTO(savedAd);
 
         return ResponseEntity.ok(updatedAdDTO);
     }
@@ -224,7 +236,7 @@ public class AdController {
     public ResponseEntity<ImageDTO> updateImage(@PathVariable Integer adId, @RequestParam("file") MultipartFile file) {
         try {
             Image image = imageAdService.saveAdImage(adId, file);
-            ImageDTO imageDTO = imageMapper.imageToImageDTO(image); // Используем внедрённый маппер
+            ImageDTO imageDTO = imageMapper.imageToImageDTO(image);
             return ResponseEntity.status(HttpStatus.CREATED).body(imageDTO);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
@@ -232,6 +244,7 @@ public class AdController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
 
 
 }

@@ -31,20 +31,23 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional
-    public CommentDTO addComment(CommentDTO commentDTO) {
+    public CommentDTO addComment(Integer adPk, CommentDTO commentDTO) {
         User user = userRepository.findById(commentDTO.getAuthor())
                 .orElseThrow(() -> new UserNotFoundException("User  not found"));
-        Ad ad = adRepository.findById(commentDTO.getPk())
+
+        Ad ad = adRepository.findById(adPk)
                 .orElseThrow(() -> new AdNotFoundException("Ad not found"));
 
         Comment comment = new Comment();
         comment.setText(commentDTO.getText());
         comment.setUser (user);
         comment.setAd(ad);
+        comment.setCreatedAt(System.currentTimeMillis()); // Устанавливаем текущую дату и время
 
         Comment savedComment = commentRepository.save(comment);
         return commentMapper.toDTO(savedComment);
     }
+
 
     @Override
     public List<CommentDTO> getCommentsByAdPk(Integer adPk) {
@@ -98,9 +101,10 @@ public class CommentServiceImpl implements CommentService {
     public List<CommentDTO> getCommentsByAd(Integer adPk) {
         List<Comment> comments = commentRepository.findByAdPk(adPk);
         return comments.stream()
-                .map(commentMapper::toDTO) // Предполагается, что у вас есть метод для преобразования Comment в CommentDTO
+                .map(commentMapper::toDTO)
                 .collect(Collectors.toList());
     }
+
 
 
 

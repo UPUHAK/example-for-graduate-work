@@ -1,6 +1,7 @@
 package ru.skypro.homework.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -20,10 +21,29 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 @Configuration
+@EnableWebSecurity
 @EnableTransactionManagement
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-public class WebSecurityConfig {
+public class WebSecurityConfig implements WebMvcConfigurer {
+
+    @Value("${image.upload.dir}")
+    private String uploadDir;
 
     private static final String[] AUTH_WHITELIST = {
             "/swagger-resources/**",
@@ -48,7 +68,7 @@ public class WebSecurityConfig {
                 .cors()
                 .and()
                 .authorizeHttpRequests(authorization -> authorization
-                        .mvcMatchers(AUTH_WHITELIST).permitAll() //  публичные эндпоинты
+                        .mvcMatchers(AUTH_WHITELIST).permitAll() // публичные эндпоинты
                         .mvcMatchers("/users/me/image").authenticated()
                         .mvcMatchers("/ads/**", "/users/**").authenticated()
                         .mvcMatchers("/admin/**").hasAuthority("ADMIN")
@@ -79,7 +99,11 @@ public class WebSecurityConfig {
         };
     }
 
-
-
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations("file:" + uploadDir + "/");
+    }
 }
+
 
