@@ -16,7 +16,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@ToString(exclude = {"ads", "comments"}) // исключаем поля, которые могут создавать циклы
+@EqualsAndHashCode(exclude = {"ads", "comments"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -81,10 +84,7 @@ public class User {
     @Email(message = "Email должен быть корректным адресом электронной почты")
     private String email;
 
-    public void setAuthorize(boolean authorize) {
-        isAuthorize = authorize;
-    }
-
+    @Setter
     @Column(name = "is_authorize", nullable = false)
     @Schema(description = "Флаг, указывающий, авторизован ли пользователь", example = "true")
     private boolean isAuthorize;

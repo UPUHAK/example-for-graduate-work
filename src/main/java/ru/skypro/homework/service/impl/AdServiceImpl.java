@@ -1,6 +1,7 @@
 package ru.skypro.homework.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.AdDTO;
@@ -16,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AdServiceImpl implements AdService {
@@ -27,12 +29,6 @@ public class AdServiceImpl implements AdService {
     public AdServiceImpl(AdRepository adRepository, AdMapper adMapper) {
         this.adRepository = adRepository;
         this.adMapper = adMapper;
-    }
-
-    // Получение всех объявлений
-    @Override
-    public List<AdDTO> getAllAds() {
-        return adMapper.toDTOList(adRepository.findAll());
     }
 
     // Добавление объявления
@@ -52,6 +48,7 @@ public class AdServiceImpl implements AdService {
     }
 
     // Удаление объявления
+    @PreAuthorize("hasRole('ADMIN') or @adSecurity.isAdOwner(#id, authentication.name)")
     @Override
     @Transactional
     public void deleteAd(Integer id) {
@@ -59,6 +56,7 @@ public class AdServiceImpl implements AdService {
     }
 
     // Обновление информации об объявлении
+    @PreAuthorize("hasRole('ADMIN') or @adSecurity.isAdOwner(#id, authentication.name)")
     @Override
     @Transactional
     public AdDTO updateAd(Integer id, AdDTO adDTO) {
@@ -75,7 +73,6 @@ public class AdServiceImpl implements AdService {
     // Получение объявлений авторизованного пользователя
     @Override
     public List<AdDTO> getAdsByAuthor(String username) {
-        // Предполагается, что у вас есть метод в репозитории для поиска по автору
         return adMapper.toDTOList(adRepository.findByUserEmail(username));
     }
 
@@ -96,7 +93,7 @@ public class AdServiceImpl implements AdService {
     }
 
     private String saveImage(MultipartFile image) throws IOException {
-        // Пример реализации сохранения изображения
+
         String directory = "path/to/images"; // Укажите реальный путь к директории для сохранения
         if (!new File(directory).exists()) {
             new File(directory).mkdirs(); // Создание директории, если она не существует
@@ -106,6 +103,22 @@ public class AdServiceImpl implements AdService {
         Files.copy(image.getInputStream(), filePath);
         return filePath.toString(); // Возвращаем путь к изображению
     }
+    @Override
+    public List<AdDTO> getAllAds() {
+        List<Ad> ads = adRepository.findAll();
+        return ads.stream()
+                .map(adMapper::toDTO) // Используем маппер для преобразования
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<AdDTO> getAdsMe(Integer userId) {
+        List<Ad> userAds = adRepository.findByUserId(userId); // Убедитесь, что метод в репозитории правильно назван
+        return userAds.stream()
+                .map(adMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+
 }
 
 

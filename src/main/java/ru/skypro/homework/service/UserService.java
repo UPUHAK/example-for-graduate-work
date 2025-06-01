@@ -1,5 +1,6 @@
 package ru.skypro.homework.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import ru.skypro.homework.dto.ImageDTO;
 import ru.skypro.homework.dto.NewPasswordDTO;
@@ -31,7 +32,10 @@ public interface UserService {
      */
     UserDTO updateUser (UpdateUserDTO updateUser );
 
-    void updateImage(MultipartFile file) throws IOException;
+
+
+    @Transactional
+    void updateUserImage(MultipartFile file) throws IOException;
 
     /**
      * Возвращает список всех пользователей.
@@ -42,10 +46,10 @@ public interface UserService {
     User createUser (UserDTO userDto);
     UserDTO getUserWithComments(Integer id);
 
-    void saveImageFromFilePath(String filePath, ImageDTO imageDTO);
 
-    void saveImageToFileSystem(MultipartFile file, ImageDTO imageDTO);
+    String getUserAvatar(Integer userId);
 
+    void updateImageForUser(Integer currentUserId, MultipartFile file);
 
 }
 

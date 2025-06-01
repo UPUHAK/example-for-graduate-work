@@ -8,8 +8,8 @@ import java.util.Optional;
 
 public interface AdRepository extends JpaRepository<Ad, Integer> {
 
-    @Override
-    Optional<Ad> findById(Integer id); // Переопределяем метод, чтобы вернуть Optional<Ad>
+
+    List<Ad> findByUserId(Integer userId);
 
     void deleteById(Integer id);
 

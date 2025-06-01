@@ -47,9 +47,6 @@ public class ImageStorageService {
         // Полный путь к файлу
         Path destinationFile = rootLocation.resolve(uniqueFilename);
 
-        // Создание директории, если она не существует
-        Files.createDirectories(destinationFile.getParent());
-
         // Сохранение файла
         try {
             Files.copy(file.getInputStream(), destinationFile, StandardCopyOption.REPLACE_EXISTING);
@@ -58,18 +55,20 @@ public class ImageStorageService {
         }
 
         // Возврат относительного пути к файлу
-        return uniqueFilename;
+        return "/images/" + uniqueFilename; // Убедитесь, что этот путь соответствует вашему маршруту
     }
 
-
     public void delete(String imageUrl) {
-        Path fileToDelete = rootLocation.resolve(imageUrl);
+        Path fileToDelete = rootLocation.resolve(imageUrl.substring(7)); // Убираем "/images/"
         try {
             Files.deleteIfExists(fileToDelete);
         } catch (IOException e) {
             throw new RuntimeException("Ошибка при удалении файла", e);
         }
     }
-
 }
+
+
+
+
 
