@@ -1,6 +1,5 @@
 package ru.skypro.homework.controller;
 
-import io.swagger.v3.oas.annotations.Operation; // Импортируйте аннотацию
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import ru.skypro.homework.dto.LoginDTO;
+
 import ru.skypro.homework.model.User;
 import ru.skypro.homework.repository.UserRepository;
 
@@ -31,20 +31,28 @@ public class LoginController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Operation(summary = "Login a user", description = "Authenticate a user with email and password.")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDTO login) {
         log.info("Attempting to log in user: {}", login.getUsername());
 
+        // Поиск пользователя по email
         Optional<User> userOpt = userRepository.findByEmail(login.getUsername());
 
         if (userOpt.isPresent()) {
             User user = userOpt.get();
 
+            // Проверка пароля
             if (passwordEncoder.matches(login.getPassword(), user.getPassword())) {
+                // Обновляем поле isAuthorize, если оно еще не true
+                if (!user.isAuthorize()) {
+                    user.setAuthorize(true);
+                    userRepository.save(user); // Сохраняем изменения в базе
+                }
+
+                // Устанавливаем аутентификацию в контексте безопасности
                 Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                return ResponseEntity.ok().build();
+                return ResponseEntity.ok().build(); // Возвращаем успешный ответ
             } else {
                 // Неверный пароль
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Неверный пароль");
@@ -54,5 +62,7 @@ public class LoginController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Пользователь не найден");
         }
     }
+
+
 }
 

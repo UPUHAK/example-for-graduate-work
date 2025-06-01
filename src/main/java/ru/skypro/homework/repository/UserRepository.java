@@ -9,14 +9,14 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
 
-    Optional<User> findByEmail(String username);
+    Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
-    Optional<Object> findById(Long userId);
+    Optional<User> findById(Integer userId);
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.comments WHERE u.email = :email")
     User findByEmailWithComments(@Param("email") String email);
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.comments WHERE u.id = :userId")
     User findByIdWithComments(@Param("userId") Integer userId);
-
 }
+

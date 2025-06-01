@@ -8,7 +8,6 @@ import ru.skypro.homework.model.Image;
 import ru.skypro.homework.repository.AdRepository;
 import ru.skypro.homework.repository.ImageRepository;
 import ru.skypro.homework.service.ImageAdService;
-import ru.skypro.homework.service.ImageService;
 import ru.skypro.homework.service.ImageStorageService;
 
 import javax.persistence.EntityNotFoundException;
@@ -42,12 +41,9 @@ public class ImageAdServiceImpl implements ImageAdService {
         image.setAd(ad); // Устанавливаем объявление
         image.setImageUrl(filename); // Устанавливаем URL изображения
 
-
-        imageRepository.save(image);
-
-        return image;
+        return imageRepository.save(image);
     }
-
 }
+
 
 

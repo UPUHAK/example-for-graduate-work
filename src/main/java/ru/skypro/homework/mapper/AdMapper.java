@@ -26,5 +26,8 @@ public interface AdMapper {
     List<AdDTO> toDTOList(List<Ad> ads);
 
     List<Ad> toEntityList(List<AdDTO> dtos);
+
+    List<AdDTO> toDTOs(List<Ad> userAds);
+
 }
 

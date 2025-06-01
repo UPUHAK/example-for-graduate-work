@@ -13,13 +13,15 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class NewPasswordDTO {
 
+    @Schema(description = "новый пароль")
+    @NotBlank
+    @Size(min = 8, max = 16)
+    private String newPassword;
+
     @Schema(description = "текущий пароль")
     @NotBlank
     @Size(min = 8, max = 16)
     private String currentPassword;
 
-    @Schema(description = "новый пароль")
-    @NotBlank
-    @Size(min = 8, max = 16)
-    private String newPassword;
+
 }

@@ -70,7 +70,6 @@ public class AdServiceImpl implements AdService {
     // Получение объявлений авторизованного пользователя
     @Override
     public List<AdDTO> getAdsByAuthor(String username) {
-        // Предполагается, что у вас есть метод в репозитории для поиска по автору
         return adMapper.toDTOList(adRepository.findByUserEmail(username));
     }
 
@@ -91,7 +90,7 @@ public class AdServiceImpl implements AdService {
     }
 
     private String saveImage(MultipartFile image) throws IOException {
-        // Пример реализации сохранения изображения
+
         String directory = "path/to/images"; // Укажите реальный путь к директории для сохранения
         if (!new File(directory).exists()) {
             new File(directory).mkdirs(); // Создание директории, если она не существует
@@ -101,22 +100,22 @@ public class AdServiceImpl implements AdService {
         Files.copy(image.getInputStream(), filePath);
         return filePath.toString(); // Возвращаем путь к изображению
     }
+    @Override
     public List<AdDTO> getAllAds() {
         List<Ad> ads = adRepository.findAll();
         return ads.stream()
-                .map(this::convertToDTO)
+                .map(adMapper::toDTO) // Используем маппер для преобразования
+                .collect(Collectors.toList());
+    }
+    @Override
+    public List<AdDTO> getAdsMe(Integer userId) {
+        List<Ad> userAds = adRepository.findByUserId(userId); // Убедитесь, что метод в репозитории правильно назван
+        return userAds.stream()
+                .map(adMapper::toDTO)
                 .collect(Collectors.toList());
     }
 
-    private AdDTO convertToDTO(Ad ad) {
-        AdDTO adDTO = new AdDTO();
-        adDTO.setPk(ad.getPk());
-        adDTO.setTitle(ad.getTitle());
-        adDTO.setPrice(ad.getPrice());
-        adDTO.setImage(ad.getImage());
-        adDTO.setAuthor(ad.getUser ().getId());
-        return adDTO;
-    }
+
 }
 
 
